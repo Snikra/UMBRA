@@ -1,0 +1,322 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  transition: background-color 0.5s ease;
+}
+
+.night-mode {
+  background-color: var(--umbra-black);
+  background-image: radial-gradient(circle at center, var(--umbra-dark) 0%, var(--umbra-darker) 100%);
+}
+
+.day-mode {
+  background-color: #2a2a35;
+  background-image: radial-gradient(circle at center, #3a3a45 0%, #1a1a25 100%);
+}
+
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--sanguine-red);
+  transition: background 0.5s ease;
+}
+
+.night-mode .header {
+  background: linear-gradient(180deg, rgba(139, 0, 0, 0.4) 0%, transparent 100%);
+}
+
+.day-mode .header {
+  background: linear-gradient(180deg, rgba(70, 130, 180, 0.3) 0%, transparent 100%);
+  border-bottom: 1px solid #4682b4;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 0 0 10px var(--sanguine-glow);
+}
+
+.toggle-mode-btn {
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: 1px solid #555;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.subtitle {
+  color: var(--sanguine-red);
+  font-family: 'Cinzel', serif;
+  letter-spacing: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.day-mode .subtitle {
+  color: #87ceeb;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Changed from auto to hide map overflow */
+}
+
+/* Map Styles */
+.map-wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  /* Add a dark vignette over the map */
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+}
+
+.night-mode .leaflet-container {
+  filter: hue-rotate(340deg) saturate(1.5) contrast(1.2); /* Make dark matter red-ish */
+}
+
+.map-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #aaa;
+  padding: 20px;
+}
+
+.fenda-popup {
+  text-align: center;
+  color: #333;
+}
+.fenda-popup h3 {
+  color: #8b0000;
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+.engage-btn {
+  background: #8b0000;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+/* Combat Arena */
+.combat-arena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.party-stats {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.stat-badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  border: 1px solid #444;
+  font-weight: bold;
+}
+
+.daemon-placeholder {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.hp-bar {
+  width: 100%;
+  height: 10px;
+  background-color: var(--umbra-darker);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background-color: var(--sanguine-red);
+  box-shadow: 0 0 10px var(--sanguine-glow);
+  transition: width 0.3s ease;
+}
+
+.dice-area {
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.dice, .dice-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: var(--umbra-dark);
+  border: 2px solid var(--sanguine-red);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: 'Cinzel', serif;
+  transform: rotate(45deg);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 20px var(--sanguine-glow);
+}
+
+.dice-placeholder {
+  opacity: 0.5;
+  border-color: var(--border-color);
+  box-shadow: none;
+}
+
+.dice span, .dice-placeholder span {
+  transform: rotate(-45deg);
+}
+
+.rolling {
+  animation: spin 0.5s linear infinite;
+  color: var(--sanguine-red);
+}
+
+@keyframes spin {
+  100% { transform: rotate(405deg); }
+}
+
+.crit-success {
+  border-color: #ffd700;
+  color: #ffd700;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+.crit-fail {
+  border-color: #555;
+  color: #555;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 1rem;
+}
+
+.attack-button {
+  flex: 1;
+  color: white;
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 4px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.attack-button.physical {
+  background-color: #8B0000;
+}
+.attack-button.stealth {
+  background-color: #4B0082; /* Indigo for dex/stealth */
+}
+
+.attack-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.attack-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.combat-log {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+  border-radius: 8px;
+  flex: 1;
+  width: 100%;
+  max-width: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+  min-height: 100px;
+}
+
+.log-new {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.log-old {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.flee-button {
+  background: transparent;
+  color: #aaa;
+  text-decoration: underline;
+  padding: 10px;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  background-color: var(--umbra-dark);
+  border-top: 1px solid var(--border-color);
+  padding: 0.8rem 0;
+  padding-bottom: env(safe-area-inset-bottom, 0.8rem);
+}
+
+.nav-item {
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+  gap: 5px;
+  flex: 1;
+}
+
+.nav-item.active {
+  color: var(--sanguine-red);
+}
+.day-mode .nav-item.active {
+  color: #4682b4;
+}
+
+.nav-item .icon {
+  font-size: 1.5rem;
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
+.nav-item.active .icon {
+  filter: grayscale(0%);
+  opacity: 1;
+}
