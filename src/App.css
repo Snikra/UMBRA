@@ -282,6 +282,65 @@
   padding: 10px;
 }
 
+/* Updates / Devlog Tab */
+.updates-tab {
+  padding: 1.5rem;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.updates-tab h2 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.updates-subtitle {
+  color: var(--sanguine-red);
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+}
+
+.update-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.update-card h3 {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  text-transform: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.update-date {
+  color: #888;
+  font-size: 0.7rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.update-card ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.update-card li {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.update-card li strong {
+  color: #fff;
+}
+
 /* Bottom Navigation */
 .bottom-nav {
   display: flex;

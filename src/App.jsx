@@ -3,7 +3,7 @@ import MapComponent from './components/MapComponent'
 import './App.css'
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('MAPA') // 'MAPA' ou 'COMBATE'
+  const [currentTab, setCurrentTab] = useState('MAPA') // 'MAPA', 'COMBATE', 'ATUALIZACOES'
   const [isNightMode, setIsNightMode] = useState(false)
   const [diceRoll, setDiceRoll] = useState(null)
   const [isRolling, setIsRolling] = useState(false)
@@ -115,6 +115,34 @@ function App() {
             </button>
           </div>
         )}
+
+        {currentTab === 'ATUALIZACOES' && (
+          <div className="updates-tab">
+            <h2>📜 Diário de Desenvolvimento (Devlog)</h2>
+            <p className="updates-subtitle">Registro de mudanças para jogadores e IAs</p>
+
+            <div className="update-card">
+              <h3>v0.2.0 - A Vibe GO (Integração GPS)</h3>
+              <span className="update-date">Hoje</span>
+              <ul>
+                <li><strong>Mundo Real:</strong> Adicionado mapa dinâmico via Leaflet (Dark Matter).</li>
+                <li><strong>Ciclo Dia/Noite:</strong> Toggle para alternar interface entre o mundo ilusório e a Verdadeira Umbra.</li>
+                <li><strong>Fendas Sombrias:</strong> Sistema spawna fendas aleatórias ao redor do jogador baseadas em coordenadas de GPS reais.</li>
+                <li><strong>Combate D&D:</strong> O combate agora utiliza atributos da Party (FOR e DES) somados à rolagem do D20.</li>
+              </ul>
+            </div>
+
+            <div className="update-card">
+              <h3>v0.1.0 - Fundação Sombria</h3>
+              <span className="update-date">Fase 1</span>
+              <ul>
+                <li>Inicialização do repositório React (Vite).</li>
+                <li>Estética Sanguine Eclipse (#121212 e Carmesim).</li>
+                <li>Navegação inferior e Protótipo de rolagem 3D do D20 com acertos críticos (20) e falhas críticas (1).</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </main>
 
       <nav className="bottom-nav">
@@ -130,9 +158,9 @@ function App() {
           <span className="icon">🛡️</span>
           <span>EQUIPE</span>
         </button>
-        <button className="nav-item">
-          <span className="icon">💎</span>
-          <span>LOJA</span>
+        <button className={`nav-item ${currentTab === 'ATUALIZACOES' ? 'active' : ''}`} onClick={() => setCurrentTab('ATUALIZACOES')}>
+          <span className="icon">📜</span>
+          <span>DEVLOG</span>
         </button>
       </nav>
     </div>
