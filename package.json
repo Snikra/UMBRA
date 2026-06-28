@@ -12,11 +12,14 @@
     "setup-certs": "node scripts/setup-certs.js"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "leaflet": "^1.9.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-leaflet": "^5.0.0"
+    "react-leaflet": "^5.0.0",
+    "three": "^0.185.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
