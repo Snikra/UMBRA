@@ -1,12 +1,17 @@
+import { readFileSync, existsSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 import { qrcode } from 'vite-plugin-qrcode'
 
+const hasCerts = existsSync('certs/cert.pem') && existsSync('certs/key.pem')
+
 export default defineConfig({
-  plugins: [react(), basicSsl(), qrcode()],
+  plugins: [react(), qrcode()],
   server: {
     host: true,
-    https: true,
+    https: hasCerts ? {
+      cert: readFileSync('certs/cert.pem'),
+      key: readFileSync('certs/key.pem'),
+    } : false,
   },
 })
