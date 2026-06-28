@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import MapComponent from './components/MapComponent'
+import CameraView from './components/CameraView'
 import QRCodeOverlay from './components/QRCodeOverlay'
 import './App.css'
 
@@ -127,6 +128,10 @@ function App() {
           </div>
         )}
 
+        {currentTab === 'EXPLORAR' && (
+          <CameraView />
+        )}
+
         {currentTab === 'ATUALIZACOES' && (
           <div className="updates-tab">
             <h2>📜 Diário de Desenvolvimento (Devlog)</h2>
@@ -164,6 +169,10 @@ function App() {
         <button className="nav-item">
           <span className="icon">🎒</span>
           <span>INVENTÁRIO</span>
+        </button>
+        <button className={`nav-item ${currentTab === 'EXPLORAR' ? 'active' : ''}`} onClick={() => setCurrentTab('EXPLORAR')}>
+          <span className="icon">🔍</span>
+          <span>EXPLORAR</span>
         </button>
         <button className="nav-item">
           <span className="icon">🛡️</span>
