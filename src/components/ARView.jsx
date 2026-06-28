@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import { createXRStore, XR, IfInSessionMode, useXRRequestHitTest, XRDomOverlay } from '@react-three/xr'
 import { Matrix4, Vector3 } from 'three'
 
@@ -11,17 +11,9 @@ const store = createXRStore({
   screenInput: false,
 })
 
-function GoblinModel({ position }) {
-  const groupRef = useRef()
-
-  useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.3
-    }
-  })
-
+function GoblinModel({ position, scale = 0.25 }) {
   return (
-    <group ref={groupRef} position={position}>
+    <group position={position} scale={scale}>
       <mesh position={[0, 1.2, 0]}>
         <sphereGeometry args={[0.5, 8, 8]} />
         <meshStandardMaterial color="#6b8e23" flatShading />
