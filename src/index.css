@@ -53,3 +53,7 @@ button {
   border: none;
   outline: none;
 }
+
+@keyframes camera-spin {
+  to { transform: rotate(360deg); }
+}

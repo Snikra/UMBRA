@@ -6,13 +6,14 @@ const CameraView = () => {
   const [facingMode, setFacingMode] = useState('environment')
   const [error, setError] = useState(null)
   const [permission, setPermission] = useState(null)
+  const [switching, setSwitching] = useState(false)
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (facing) => {
     setError(null)
-    setPermission(null)
+    setSwitching(true)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } },
         audio: false,
       })
       streamRef.current = stream
@@ -29,22 +30,26 @@ const CameraView = () => {
         setPermission('error')
         setError(err.message)
       }
+    } finally {
+      setSwitching(false)
     }
-  }, [facingMode])
+  }, [])
 
   useEffect(() => {
-    startCamera()
+    const video = videoRef.current
+    startCamera(facingMode)
     return () => {
+      if (video) {
+        video.srcObject = null
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop())
+        streamRef.current = null
       }
     }
-  }, [startCamera])
+  }, [facingMode, startCamera])
 
   const toggleCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop())
-    }
     setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')
   }
 
@@ -59,15 +64,6 @@ const CameraView = () => {
         <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
           Permissão da câmera foi bloqueada. Acesse as configurações do seu navegador e permita o acesso à câmera.
         </p>
-        <button
-          onClick={() => setPermission(null)}
-          style={{
-            marginTop: 8, backgroundColor: '#8B0000', color: '#fff',
-            border: 'none', padding: '10px 24px', borderRadius: 6, cursor: 'pointer',
-          }}
-        >
-          Tentar Novamente
-        </button>
       </div>
     )
   }
@@ -96,20 +92,11 @@ const CameraView = () => {
         <span style={{ fontSize: '3rem' }}>⚠️</span>
         <h2 style={{ color: '#fff', fontFamily: 'Cinzel, serif' }}>ERRO NA CÂMERA</h2>
         <p style={{ color: '#aaa', fontSize: '0.9rem' }}>{error}</p>
-        <button
-          onClick={() => { setError(null); setPermission(null); startCamera() }}
-          style={{
-            marginTop: 8, backgroundColor: '#8B0000', color: '#fff',
-            border: 'none', padding: '10px 24px', borderRadius: 6, cursor: 'pointer',
-          }}
-        >
-          Tentar Novamente
-        </button>
       </div>
     )
   }
 
-  if (permission !== 'granted') {
+  if (permission !== 'granted' && !switching) {
     return (
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
@@ -121,7 +108,7 @@ const CameraView = () => {
           Ative a câmera para usar recursos de RA.
         </p>
         <button
-          onClick={startCamera}
+          onClick={() => startCamera(facingMode)}
           style={{
             marginTop: 8, backgroundColor: '#8B0000', color: '#fff',
             border: 'none', padding: '10px 24px', borderRadius: 6, cursor: 'pointer',
@@ -135,10 +122,26 @@ const CameraView = () => {
 
   return (
     <div style={{ flex: 1, position: 'relative', backgroundColor: '#000', overflow: 'hidden' }}>
+      {switching && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+        }}>
+          <div style={{
+            width: 40, height: 40,
+            border: '3px solid #8B0000', borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'camera-spin 0.6s linear infinite',
+          }} />
+        </div>
+      )}
+
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        muted
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
@@ -161,11 +164,13 @@ const CameraView = () => {
       }}>
         <button
           onClick={toggleCamera}
+          disabled={switching}
           style={{
             backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff',
             border: '2px solid #8B0000', borderRadius: '50%',
             width: 56, height: 56, fontSize: '1.5rem', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: switching ? 0.5 : 1,
           }}
         >
           🔄
