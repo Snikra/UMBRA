@@ -50,38 +50,45 @@ vite.on('exit', (code) => {
 function startTunnel(port) {
   const cloudflared = findCloudflared()
   if (!cloudflared) {
-    console.log('\n  ⚠️  Cloudflare Tunnel não encontrado.\n  Para instalar: winget install cloudflare.cloudflared\n')
+    console.log('\n  ⚠️  Cloudflare Tunnel não instalado. Acesse apenas pela rede local.\n  Instale com: winget install cloudflare.cloudflared\n')
     return
   }
 
   const url = `https://localhost:${port}`
-  console.log(`\n  🚇  Iniciando Cloudflare Tunnel para ${url}\n`)
+  console.log(`\n  🚇  Conectando ao Cloudflare... (aguarde alguns segundos)\n`)
 
   const tunnel = spawn(cloudflared, ['tunnel', '--url', url], {
     stdio: ['pipe', 'pipe', 'pipe'],
     shell: true,
   })
 
-  let tunnelBuffer = ''
+  const urlPattern = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/
+  let urlFound = false
+
+  function checkOutput(text) {
+    if (urlFound) return
+    const match = text.match(urlPattern)
+    if (match) {
+      urlFound = true
+      console.log(`\n  ╔══════════════════════════════════════════════════════════╗`)
+      console.log(`  ║                                                          ║`)
+      console.log(`  ║     🌍  URL PÚBLICA                                     ║`)
+      console.log(`  ║                                                          ║`)
+      console.log(`  ║     ${match[0]}    ║`)
+      console.log(`  ║                                                          ║`)
+      console.log(`  ║  Acesse de qualquer lugar com este link                  ║`)
+      console.log(`  ║  Compartilhe com quem estiver em outra rede              ║`)
+      console.log(`  ║                                                          ║`)
+      console.log(`  ╚══════════════════════════════════════════════════════════╝\n`)
+    }
+  }
 
   tunnel.stdout.on('data', (data) => {
-    const text = data.toString()
-    tunnelBuffer += text
-    process.stdout.write(text)
-
-    const match = tunnelBuffer.match(
-      /https:\/\/[a-z0-9-]+\.trycloudflare\.com/
-    )
-    if (match) {
-      console.log(`\n  ┌──────────────────────────────────────────────────────────┐`)
-      console.log(`  │  🌍  URL PÚBLICA:  ${match[0]}  │`)
-      console.log(`  │  Acesse de qualquer lugar com este link                  │`)
-      console.log(`  └──────────────────────────────────────────────────────────┘\n`)
-    }
+    checkOutput(data.toString())
   })
 
   tunnel.stderr.on('data', (data) => {
-    process.stderr.write(data.toString())
+    checkOutput(data.toString())
   })
 
   tunnel.on('exit', () => {
