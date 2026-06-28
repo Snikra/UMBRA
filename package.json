@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "tunnel": "cloudflared tunnel --url https://localhost:5173",
-    "dev:all": "node scripts/dev-all.js",
+    "dev:all": "node --no-deprecation scripts/dev-all.js",
     "setup-certs": "node scripts/setup-certs.js"
   },
   "dependencies": {
