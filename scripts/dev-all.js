@@ -15,10 +15,6 @@ function findCloudflared() {
   return null
 }
 
-try {
-  execSync('taskkill /F /FI "PID ne 0" /FI "WINDOWTITLE ne ''" 2>nul | where /R "5173"', { stdio: 'pipe' })
-} catch {}
-
 console.log('\n  🚀  Iniciando UMBRA — Vite + Cloudflare Tunnel\n')
 
 const vite = spawn('vite', ['--host'], {
