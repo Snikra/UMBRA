@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import MapComponent from './components/MapComponent'
-import CameraView from './components/CameraView'
+import ExplorerTab from './components/ExplorerTab'
 import QRCodeOverlay from './components/QRCodeOverlay'
 import './App.css'
 
@@ -129,7 +129,7 @@ function App() {
         )}
 
         {currentTab === 'EXPLORAR' && (
-          <CameraView />
+          <ExplorerTab />
         )}
 
         {currentTab === 'ATUALIZACOES' && (

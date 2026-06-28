@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import AROverlay from './AROverlay'
 
 const CameraView = () => {
   const videoRef = useRef(null)
@@ -145,8 +144,6 @@ const CameraView = () => {
         muted
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
-
-      <AROverlay />
 
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0,
