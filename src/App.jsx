@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import MapComponent from './components/MapComponent'
+import QRCodeOverlay from './components/QRCodeOverlay'
 import './App.css'
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   const [diceRoll, setDiceRoll] = useState(null)
   const [isRolling, setIsRolling] = useState(false)
   const [log, setLog] = useState(["Você encontrou um Daemon de Baixo Nível!"])
+  const [showQR, setShowQR] = useState(false)
 
   // Character Attributes (D&D Style)
   const playerStats = { FOR: 16, DES: 14, INT: 10 }
@@ -43,12 +45,21 @@ function App() {
       <header className="header">
         <div className="header-top">
           <h1>UMBRA</h1>
-          <button 
-            className="toggle-mode-btn" 
-            onClick={() => setIsNightMode(!isNightMode)}
-          >
-            {isNightMode ? '☀️ Modo Dia' : '🌑 Modo Umbra'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              className="toggle-mode-btn" 
+              onClick={() => setIsNightMode(!isNightMode)}
+            >
+              {isNightMode ? '☀️ Modo Dia' : '🌑 Modo Umbra'}
+            </button>
+            <button 
+              className="toggle-mode-btn" 
+              onClick={() => setShowQR(true)}
+              title="Compartilhar"
+            >
+              📡 Compartilhar
+            </button>
+          </div>
         </div>
         <p className="subtitle">SANGUINE ECLIPSE</p>
       </header>
@@ -163,6 +174,8 @@ function App() {
           <span>DEVLOG</span>
         </button>
       </nav>
+
+      <QRCodeOverlay isOpen={showQR} onClose={() => setShowQR(false)} />
     </div>
   )
 }
