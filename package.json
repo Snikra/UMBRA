@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "tunnel": "cloudflared tunnel --url https://localhost:5173",
-    "dev:all": "concurrently -n VITE,TUNNEL -c cyan,red \"vite --host\" \"node scripts/tunnel.js\"",
+    "dev:all": "node scripts/dev-all.js",
     "setup-certs": "node scripts/setup-certs.js"
   },
   "dependencies": {
