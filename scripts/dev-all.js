@@ -7,6 +7,7 @@ function findCloudflared() {
     return 'cloudflared'
   } catch {}
   const paths = [
+    `${process.env.LOCALAPPDATA}\\cloudflared\\cloudflared.exe`,
     `${process.env.LOCALAPPDATA}\\Microsoft\\WinGet\\Packages\\Cloudflare.cloudflared_Microsoft.WinGet.Source_8wekyb3d8bbwe\\cloudflared.exe`,
   ]
   for (const p of paths) {
