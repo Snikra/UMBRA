@@ -23,17 +23,19 @@ const vite = spawn('vite', ['--host'], {
 })
 
 let vitePort = null
-const viteOutput = []
+let viteBuffer = ''
 
 vite.stdout.on('data', (data) => {
   const text = data.toString()
-  viteOutput.push(text)
+  viteBuffer += text
   process.stdout.write(text)
 
-  const portMatch = text.match(/Local:\s+https?:\/\/localhost:(\d+)/)
-  if (portMatch) {
-    vitePort = parseInt(portMatch[1])
-    startTunnel(vitePort)
+  if (!vitePort) {
+    const match = viteBuffer.match(/Local:\s+https?:\/\/localhost:(\d+)/)
+    if (match) {
+      vitePort = parseInt(match[1])
+      startTunnel(vitePort)
+    }
   }
 })
 
@@ -48,8 +50,7 @@ vite.on('exit', (code) => {
 function startTunnel(port) {
   const cloudflared = findCloudflared()
   if (!cloudflared) {
-    console.log('\n  ⚠️  Cloudflare Tunnel não instalado. Acesse apenas pela rede local.\n')
-    console.log('  Para instalar: winget install cloudflare.cloudflared\n')
+    console.log('\n  ⚠️  Cloudflare Tunnel não encontrado.\n  Para instalar: winget install cloudflare.cloudflared\n')
     return
   }
 
@@ -61,16 +62,21 @@ function startTunnel(port) {
     shell: true,
   })
 
+  let tunnelBuffer = ''
+
   tunnel.stdout.on('data', (data) => {
     const text = data.toString()
+    tunnelBuffer += text
     process.stdout.write(text)
 
-    const urlMatch = text.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/)
-    if (urlMatch) {
-      console.log(`\n  ┌──────────────────────────────────────────────────────┐`)
-      console.log(`  │  🌍  URL PÚBLICA: ${urlMatch[0]}  │`)
-      console.log(`  │  Compartilhe este link para acessar de qualquer lugar │`)
-      console.log(`  └──────────────────────────────────────────────────────┘\n`)
+    const match = tunnelBuffer.match(
+      /https:\/\/[a-z0-9-]+\.trycloudflare\.com/
+    )
+    if (match) {
+      console.log(`\n  ┌──────────────────────────────────────────────────────────┐`)
+      console.log(`  │  🌍  URL PÚBLICA:  ${match[0]}  │`)
+      console.log(`  │  Acesse de qualquer lugar com este link                  │`)
+      console.log(`  └──────────────────────────────────────────────────────────┘\n`)
     }
   })
 
