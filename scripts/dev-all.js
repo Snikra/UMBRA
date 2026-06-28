@@ -15,49 +15,48 @@ function findCloudflared() {
   return null
 }
 
+try {
+  execSync('netstat -ano | findstr ":5173 "', { stdio: 'pipe' })
+    .toString()
+    .split('\n')
+    .forEach(line => {
+      const parts = line.trim().split(/\s+/)
+      const pid = parts[parts.length - 1]
+      if (pid && pid !== '0') {
+        try { execSync(`taskkill /F /PID ${pid}`, { stdio: 'pipe' }) } catch {}
+      }
+    })
+} catch {}
+
 console.log('\n  🚀  Iniciando UMBRA — Vite + Cloudflare Tunnel\n')
 
 const vite = spawn('vite', ['--host'], {
-  stdio: ['pipe', 'pipe', 'pipe'],
+  stdio: ['inherit', 'pipe', 'pipe'],
   shell: true,
 })
 
-let vitePort = null
-let viteBuffer = ''
-
 vite.stdout.on('data', (data) => {
-  const text = data.toString()
-  viteBuffer += text
-  process.stdout.write(text)
-
-  if (!vitePort) {
-    const match = viteBuffer.match(/Local:\s+https?:\/\/localhost:(\d+)/)
-    if (match) {
-      vitePort = parseInt(match[1])
-      startTunnel(vitePort)
-    }
-  }
+  process.stdout.write(data)
 })
 
 vite.stderr.on('data', (data) => {
-  process.stderr.write(data.toString())
+  process.stderr.write(data)
 })
 
 vite.on('exit', (code) => {
   process.exit(code)
 })
 
-function startTunnel(port) {
+setTimeout(() => {
   const cloudflared = findCloudflared()
   if (!cloudflared) {
-    console.log('\n  ⚠️  Cloudflare Tunnel não instalado. Acesse apenas pela rede local.\n  Instale com: winget install cloudflare.cloudflared\n')
+    console.log('\n  ⚠️  Cloudflare Tunnel não instalado.\n  Instale com: winget install cloudflare.cloudflared\n')
     return
   }
 
-  const url = `https://localhost:${port}`
   console.log(`\n  🚇  Conectando ao Cloudflare... (aguarde alguns segundos)\n`)
 
-  const tunnel = spawn(cloudflared, ['tunnel', '--url', url], {
+  const tunnel = spawn(cloudflared, ['tunnel', '--url', 'https://localhost:5173'], {
     stdio: ['pipe', 'pipe', 'pipe'],
     shell: true,
   })
@@ -65,8 +64,9 @@ function startTunnel(port) {
   const urlPattern = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/
   let urlFound = false
 
-  function checkOutput(text) {
+  function checkOutput(data) {
     if (urlFound) return
+    const text = data.toString()
     const match = text.match(urlPattern)
     if (match) {
       urlFound = true
@@ -80,16 +80,12 @@ function startTunnel(port) {
       console.log(`  ║  Compartilhe com quem estiver em outra rede              ║`)
       console.log(`  ║                                                          ║`)
       console.log(`  ╚══════════════════════════════════════════════════════════╝\n`)
+      console.log(`  Pressione Ctrl+C para parar tudo.\n`)
     }
   }
 
-  tunnel.stdout.on('data', (data) => {
-    checkOutput(data.toString())
-  })
-
-  tunnel.stderr.on('data', (data) => {
-    checkOutput(data.toString())
-  })
+  tunnel.stdout.on('data', checkOutput)
+  tunnel.stderr.on('data', checkOutput)
 
   tunnel.on('exit', () => {
     vite.kill()
@@ -101,4 +97,4 @@ function startTunnel(port) {
     vite.kill()
     process.exit()
   })
-}
+}, 2000)
