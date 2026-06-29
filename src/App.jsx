@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import MapComponent from './components/MapComponent'
 import ExplorerTab from './components/ExplorerTab'
+import InventoryTab from './components/InventoryTab'
 import QRCodeOverlay from './components/QRCodeOverlay'
 import './App.css'
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('MAPA') // 'MAPA', 'COMBATE', 'ATUALIZACOES'
+  const [currentTab, setCurrentTab] = useState('MAPA') // 'MAPA', 'COMBATE', 'INVENTARIO', 'ATUALIZACOES'
   const [isNightMode, setIsNightMode] = useState(false)
   const [diceRoll, setDiceRoll] = useState(null)
   const [isRolling, setIsRolling] = useState(false)
   const [log, setLog] = useState(["Você encontrou um Daemon de Baixo Nível!"])
   const [showQR, setShowQR] = useState(false)
+  
+  // Immersive stats binding
+  const [playerHp, setPlayerHp] = useState(70) // Start damaged so they can test healing!
+  const maxHp = 100
 
   // Character Attributes (D&D Style)
   const playerStats = { FOR: 16, DES: 14, INT: 10 }
@@ -18,6 +23,10 @@ function App() {
   const engageCombat = () => {
     setCurrentTab('COMBATE')
     setLog(["Um Daemon Sombrio te emboscou saindo da fenda!"])
+  }
+
+  const handleHeal = (amount) => {
+    setPlayerHp(prev => Math.min(maxHp, prev + amount))
   }
 
   const rollDice = (modifierName, modifierValue) => {
@@ -32,10 +41,17 @@ function App() {
       setIsRolling(false)
       
       let message = `Rolou um ${baseRoll} + ${modifierValue} (${modifierName}) = ${total}. `
-      if (baseRoll === 20) message += "ACERTO CRÍTICO! Dano Colossal!"
-      else if (baseRoll === 1) message += "FALHA CRÍTICA! Você tropeçou."
-      else if (total >= 15) message += "Acerto! Você causou dano."
-      else message += "Errou! A armadura do Daemon resistiu."
+      if (baseRoll === 20) {
+        message += "ACERTO CRÍTICO! Dano Colossal!"
+      } else if (baseRoll === 1) {
+        message += "FALHA CRÍTICA! O Daemon te contra-atacou severamente."
+        setPlayerHp(prev => Math.max(0, prev - 20))
+      } else if (total >= 15) {
+        message += "Acerto! Você causou dano no Daemon."
+      } else {
+        message += "Errou! Você levou um golpe rasante do monstro."
+        setPlayerHp(prev => Math.max(0, prev - 10))
+      }
       
       setLog(prev => [message, ...prev])
     }, 1000)
@@ -73,46 +89,58 @@ function App() {
         {currentTab === 'COMBATE' && (
           <div className="combat-arena">
             <div className="party-stats">
-              <span className="stat-badge">FOR {playerStats.FOR} (+3)</span>
+              <span className="stat-badge">HP {playerHp}/{maxHp}</span>
+              <span className="stat-badge font-red">FOR {playerStats.FOR} (+3)</span>
               <span className="stat-badge">DES {playerStats.DES} (+2)</span>
-              <span className="stat-badge">INT {playerStats.INT} (+0)</span>
             </div>
 
-            <div className="daemon-placeholder">
-              <h2>{isNightMode ? 'Daemon do Eclipse' : 'Goblin de Rua'}</h2>
-              <div className="hp-bar">
-                <div className="hp-fill" style={{ width: '80%' }}></div>
+            {playerHp <= 0 ? (
+              <div className="defeat-screen">
+                <h2>Você Desmaiou!</h2>
+                <p>A força da Umbra foi maior. Use uma poção do seu inventário para se recuperar.</p>
+                <button className="attack-button physical" onClick={() => setCurrentTab('INVENTARIO')}>
+                  Abrir Inventário
+                </button>
               </div>
-            </div>
-
-            <div className="dice-area">
-              {isRolling ? (
-                <div className="dice rolling">...</div>
-              ) : diceRoll ? (
-                <div className={`dice ${diceRoll === 20 ? 'crit-success' : diceRoll === 1 ? 'crit-fail' : ''}`}>
-                  {diceRoll}
+            ) : (
+              <>
+                <div className="daemon-placeholder">
+                  <h2>{isNightMode ? 'Daemon do Eclipse' : 'Goblin de Rua'}</h2>
+                  <div className="hp-bar">
+                    <div className="hp-fill" style={{ width: '80%' }}></div>
+                  </div>
                 </div>
-              ) : (
-                <div className="dice-placeholder">D20</div>
-              )}
-            </div>
 
-            <div className="action-buttons">
-              <button 
-                className="attack-button physical"
-                onClick={() => rollDice('FOR', 3)}
-                disabled={isRolling}
-              >
-                Ataque Brutal (FOR)
-              </button>
-              <button 
-                className="attack-button stealth"
-                onClick={() => rollDice('DES', 2)}
-                disabled={isRolling}
-              >
-                Ataque Furtivo (DES)
-              </button>
-            </div>
+                <div className="dice-area">
+                  {isRolling ? (
+                    <div className="dice rolling">...</div>
+                  ) : diceRoll ? (
+                    <div className={`dice ${diceRoll === 20 ? 'crit-success' : diceRoll === 1 ? 'crit-fail' : ''}`}>
+                      {diceRoll}
+                    </div>
+                  ) : (
+                    <div className="dice-placeholder">D20</div>
+                  )}
+                </div>
+
+                <div className="action-buttons">
+                  <button 
+                    className="attack-button physical"
+                    onClick={() => rollDice('FOR', 3)}
+                    disabled={isRolling}
+                  >
+                    Ataque Brutal (FOR)
+                  </button>
+                  <button 
+                    className="attack-button stealth"
+                    onClick={() => rollDice('DES', 2)}
+                    disabled={isRolling}
+                  >
+                    Ataque Furtivo (DES)
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="combat-log">
               {log.map((entry, idx) => (
@@ -123,9 +151,18 @@ function App() {
             </div>
             
             <button className="flee-button" onClick={() => setCurrentTab('MAPA')}>
-              🏃 Fugir da Batalha
+              🏃 Voltar ao Mapa
             </button>
           </div>
+        )}
+
+        {currentTab === 'INVENTARIO' && (
+          <InventoryTab 
+            playerHp={playerHp}
+            maxHp={maxHp}
+            onHeal={handleHeal}
+            playerStats={playerStats}
+          />
         )}
 
         {currentTab === 'EXPLORAR' && (
@@ -138,23 +175,23 @@ function App() {
             <p className="updates-subtitle">Registro de mudanças para jogadores e IAs</p>
 
             <div className="update-card">
-              <h3>v0.2.0 - A Vibe GO (Integração GPS)</h3>
+              <h3>v0.3.0 - O Sistema de Inventário (Fase 3)</h3>
               <span className="update-date">Hoje</span>
               <ul>
-                <li><strong>Mundo Real:</strong> Adicionado mapa dinâmico via Leaflet (Dark Matter).</li>
-                <li><strong>Ciclo Dia/Noite:</strong> Toggle para alternar interface entre o mundo ilusório e a Verdadeira Umbra.</li>
-                <li><strong>Fendas Sombrias:</strong> Sistema spawna fendas aleatórias ao redor do jogador baseadas em coordenadas de GPS reais.</li>
-                <li><strong>Combate D&D:</strong> O combate agora utiliza atributos da Party (FOR e DES) somados à rolagem do D20.</li>
+                <li><strong>Mochila Desperta:</strong> Implementada aba funcional de inventário com grade clássica de 24 slots.</li>
+                <li><strong>Consumíveis de HP:</strong> Poções agora são funcionais! Usar uma poção no inventário restaura seu HP.</li>
+                <li><strong>Combate Letal:</strong> Goblins e Daemons agora causam dano real a você se você tirar números baixos ou Falhas Críticas.</li>
+                <li><strong>Requisitos de Armas:</strong> Itens mostram detalhes técnicos e exigências de status inspirados em D&D.</li>
               </ul>
             </div>
 
             <div className="update-card">
-              <h3>v0.1.0 - Fundação Sombria</h3>
-              <span className="update-date">Fase 1</span>
+              <h3>v0.2.0 - A Vibe GO (Integração GPS)</h3>
+              <span className="update-date">Fase 2</span>
               <ul>
-                <li>Inicialização do repositório React (Vite).</li>
-                <li>Estética Sanguine Eclipse (#121212 e Carmesim).</li>
-                <li>Navegação inferior e Protótipo de rolagem 3D do D20 com acertos críticos (20) e falhas críticas (1).</li>
+                <li><strong>Mundo Real:</strong> Adicionado mapa dinâmico via Leaflet (Dark Matter).</li>
+                <li><strong>Ciclo Dia/Noite:</strong> Toggle para alternar interface entre o mundo ilusório e a Verdadeira Umbra.</li>
+                <li><strong>Realidade Aumentada (WebXR):</strong> Equipe integrou suporte a Three.js e WebXR com fallback para visualização de câmera comum, renderizando um Goblin 3D sobre o ambiente.</li>
               </ul>
             </div>
           </div>
@@ -166,7 +203,7 @@ function App() {
           <span className="icon">🌍</span>
           <span>MAPA</span>
         </button>
-        <button className="nav-item">
+        <button className={`nav-item ${currentTab === 'INVENTARIO' ? 'active' : ''}`} onClick={() => setCurrentTab('INVENTARIO')}>
           <span className="icon">🎒</span>
           <span>INVENTÁRIO</span>
         </button>

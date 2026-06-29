@@ -283,6 +283,239 @@
   padding: 10px;
 }
 
+/* Defeat Screen */
+.defeat-screen {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(139, 0, 0, 0.1);
+  border: 1px solid var(--sanguine-red);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 300px;
+}
+.defeat-screen h2 {
+  color: var(--sanguine-red);
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 10px var(--sanguine-glow);
+}
+.defeat-screen p {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Inventory Tab */
+.inventory-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.inventory-header h2 {
+  font-size: 1.2rem;
+}
+
+.hp-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.hp-indicator span {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.hp-mini-bar {
+  width: 80px;
+  height: 6px;
+  background: var(--umbra-darker);
+  border: 1px solid #444;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hp-mini-fill {
+  height: 100%;
+  background-color: var(--sanguine-red);
+  box-shadow: 0 0 5px var(--sanguine-glow);
+  transition: width 0.3s ease;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.inventory-slot {
+  aspect-ratio: 1;
+  background: var(--umbra-darker);
+  border: 1px solid #333;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inventory-slot:hover {
+  border-color: #555;
+}
+
+.selected-slot {
+  border-color: var(--sanguine-red);
+  box-shadow: 0 0 10px var(--sanguine-glow);
+}
+
+.item-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.item-icon {
+  font-size: 1.6rem;
+}
+
+.item-qty {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.empty-slot-dot {
+  width: 4px;
+  height: 4px;
+  background: #333;
+  border-radius: 50%;
+}
+
+.item-detail-panel {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.no-item-selected {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  font-style: italic;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.detail-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.detail-icon {
+  font-size: 2.2rem;
+}
+
+.detail-header h3 {
+  font-size: 1.1rem;
+  font-family: 'Inter', sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 2px;
+}
+
+.detail-type {
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.type-consumable { background: #8B0000; }
+.type-weapon { background: #daa520; }
+.type-material { background: #4682b4; }
+.type-currency { background: #32cd32; }
+.type-scroll { background: #9370db; }
+
+.detail-description {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.detail-stats {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #daa520;
+}
+
+.detail-reqs {
+  font-size: 0.8rem;
+  color: #ff6347;
+}
+
+.use-item-btn {
+  background: var(--sanguine-red);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: auto;
+  box-shadow: 0 4px 10px rgba(139, 0, 0, 0.4);
+}
+
+.use-item-btn:active {
+  transform: scale(0.98);
+}
+
+.font-red {
+  color: var(--sanguine-red) !important;
+}
+
 /* Updates / Devlog Tab */
 .updates-tab {
   padding: 1.5rem;
