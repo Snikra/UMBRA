@@ -41,6 +41,15 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.geojson.Point
+import android.graphics.BitmapFactory
+import com.example.umbra.R
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import android.content.Intent
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 
 @Composable
 fun MainScreen(
@@ -58,9 +67,20 @@ fun MainScreen(
       return
   }
 
+  val isSearching by battleViewModel.isSearching.collectAsState()
+
+  LaunchedEffect(discoveredOpponents) {
+      if (discoveredOpponents.isNotEmpty()) {
+          showBattleDialog = true
+      }
+  }
+
   // GPS State
   var userLoc by remember { mutableStateOf(Pair(-46.6333, -23.5505)) }
   val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+  var is3DView by remember { mutableStateOf(true) }
+  val mapPitch by animateFloatAsState(targetValue = if (is3DView) 60f else 0f, label = "pitch")
+
   val mapViewportState = remember { MapViewportState().apply {
       setCameraOptions {
           center(Point.fromLngLat(-46.6333, -23.5505))
@@ -69,23 +89,39 @@ fun MainScreen(
       }
   }}
 
-  val locationPermissionLauncher = rememberLauncherForActivityResult(
-      contract = ActivityResultContracts.RequestPermission()
-  ) { isGranted ->
-      if (isGranted) {
-          // Permissão concedida
+  LaunchedEffect(mapPitch) {
+      mapViewportState.setCameraOptions {
+          pitch(mapPitch.toDouble())
       }
   }
 
+  val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+  val bluetoothAdapter = bluetoothManager.adapter
+  val enableBluetoothLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+      if (result.resultCode == android.app.Activity.RESULT_OK) {
+          showBattleDialog = true
+      }
+  }
+
+  var hasLocationPermission by remember { 
+      mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) 
+  }
+
+  val locationPermissionLauncher = rememberLauncherForActivityResult(
+      contract = ActivityResultContracts.RequestPermission()
+  ) { isGranted ->
+      hasLocationPermission = isGranted
+  }
+
   LaunchedEffect(Unit) {
-      if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+      if (!hasLocationPermission) {
           locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
       }
   }
 
-  DisposableEffect(Unit) {
+  DisposableEffect(hasLocationPermission) {
       var locationCallback: LocationCallback? = null
-      if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+      if (hasLocationPermission) {
           val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3000).build()
           locationCallback = object : LocationCallback() {
               override fun onLocationResult(result: LocationResult) {
@@ -97,7 +133,11 @@ fun MainScreen(
                   }
               }
           }
-          fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, android.os.Looper.getMainLooper())
+          try {
+              fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, android.os.Looper.getMainLooper())
+          } catch (e: SecurityException) {
+              // Permission was revoked
+          }
       }
       onDispose {
           locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
@@ -113,11 +153,11 @@ fun MainScreen(
         MapStyle(style = com.mapbox.maps.Style.DARK)
       }
     ) {
+        val avatarBitmap = remember { BitmapFactory.decodeResource(context.resources, R.drawable.player_avatar) }
         PointAnnotation(
             point = Point.fromLngLat(userLoc.first, userLoc.second),
-            iconImage = "",
-            textField = "👩🏻‍🎤",
-            textSize = 40.0
+            iconImageBitmap = avatarBitmap,
+            iconSize = 0.5
         )
     }
 
@@ -128,21 +168,76 @@ fun MainScreen(
       TopStatusRow()
       Spacer(modifier = Modifier.weight(1f))
       SearchBarRow()
-      BottomNavBar()
+      BottomNavBar(onMapToggle = { is3DView = !is3DView })
     }
 
     // Floating Action Buttons na Direita
     RightActionPanel(
-      onBattleClick = { showBattleDialog = true },
+      onBattleClick = { 
+          if (bluetoothAdapter?.isEnabled == true) {
+              showBattleDialog = true 
+          } else {
+              enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+          }
+      },
       modifier = Modifier
         .align(Alignment.CenterEnd)
         .padding(end = 16.dp)
     )
 
-    if (showBattleDialog) {
+    if (isSearching) {
+        val infiniteTransition = rememberInfiniteTransition(label = "radar")
+        val radius by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 800f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "radius"
+        )
+        val alpha by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "alpha"
+        )
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawCircle(
+                    color = Color(0xFF00BCD4).copy(alpha = alpha),
+                    radius = radius,
+                    center = center
+                )
+                drawCircle(
+                    color = Color.Red.copy(alpha = alpha),
+                    radius = radius * 0.7f,
+                    center = center
+                )
+            }
+        }
+    }
+
+    if (showBattleDialog && !isSearching) {
       AlertDialog(
-        onDismissRequest = { showBattleDialog = false },
-        title = { Text("Fenda de Duelo ⚔️") },
+        onDismissRequest = { 
+            showBattleDialog = false
+            battleViewModel.stopFenda()
+        },
+        title = { 
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Fenda de Duelo ⚔️")
+                IconButton(onClick = {
+                    showBattleDialog = false
+                    battleViewModel.stopFenda()
+                }) {
+                    Text("X", fontSize = 18.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
         text = { 
           Column {
             Text("Escolha sua estratégia de combate local:")
@@ -183,6 +278,7 @@ fun MainScreen(
           OutlinedButton(
             onClick = {
               battleViewModel.searchOponente()
+              showBattleDialog = false
             }
           ) {
             Text("Procurar Oponente")
@@ -261,7 +357,7 @@ fun SearchBarRow() {
 }
 
 @Composable
-fun BottomNavBar() {
+fun BottomNavBar(onMapToggle: () -> Unit) {
   Surface(
     color = Color(0xFF121212),
     modifier = Modifier.fillMaxWidth()
@@ -288,6 +384,7 @@ fun BottomNavBar() {
           .align(Alignment.Center)
           .clip(CircleShape)
           .background(Color(0xFFB8860B)) // Dourado escuro
+          .clickable { onMapToggle() }
       ) {
          Text("🗺️", modifier = Modifier.align(Alignment.Center), fontSize = 24.sp)
       }

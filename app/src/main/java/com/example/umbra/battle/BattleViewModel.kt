@@ -38,6 +38,9 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
     private val _discoveredOpponents = MutableStateFlow<List<DiscoveredOpponent>>(emptyList())
     val discoveredOpponents: StateFlow<List<DiscoveredOpponent>> = _discoveredOpponents.asStateFlow()
 
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
     private val _connectedOpponentId = MutableStateFlow<String?>(null)
     val connectedOpponentId: StateFlow<String?> = _connectedOpponentId.asStateFlow()
 
@@ -60,6 +63,7 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
             if (list.none { it.endpointId == id }) {
                 list.add(DiscoveredOpponent(id, name))
                 _discoveredOpponents.value = list
+                _isSearching.value = false // Para o radar quando acha alguém
             }
         }
 
@@ -82,11 +86,19 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
     }
 
     fun searchOponente() {
+        _isSearching.value = true
         battleManager.startDiscovery()
     }
 
     fun connectToOpponent(playerName: String, endpointId: String) {
         battleManager.requestConnection(playerName, endpointId)
+    }
+
+    fun stopFenda() {
+        battleManager.stopAdvertising()
+        battleManager.stopDiscovery()
+        _isSearching.value = false
+        _discoveredOpponents.value = emptyList() // Limpa a lista ao cancelar
     }
 
     // --- SISTEMA FÍSICO (ACELERÔMETRO) ---
