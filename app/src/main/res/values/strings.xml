@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Umbra</string>
+    <string name="mapbox_access_token">pk.eyJ1IjoibGVpdG8yMDg1IiwiYSI6ImNtcXNpNXVhMjA4dHkyeXFiYzZrbXBpNWMifQ.nm5E7Xz77EAvW2foQ220cQ</string>
+</resources>
