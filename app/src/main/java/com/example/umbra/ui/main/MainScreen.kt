@@ -41,12 +41,12 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.geojson.Point
-import android.graphics.BitmapFactory
-import com.example.umbra.R
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import com.mapbox.maps.extension.compose.MapEffect
+import com.mapbox.maps.plugin.locationcomponent.location
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -153,12 +153,12 @@ fun MainScreen(
         MapStyle(style = com.mapbox.maps.Style.DARK)
       }
     ) {
-        val avatarBitmap = remember { BitmapFactory.decodeResource(context.resources, R.drawable.player_avatar) }
-        PointAnnotation(
-            point = Point.fromLngLat(userLoc.first, userLoc.second),
-            iconImageBitmap = avatarBitmap,
-            iconSize = 0.5
-        )
+        MapEffect { mapView ->
+            mapView.location.updateSettings {
+                enabled = true
+                pulsingEnabled = true
+            }
+        }
     }
 
     // Camada 2: HUD
