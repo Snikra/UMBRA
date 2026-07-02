@@ -8,6 +8,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.apk
+*.aab
+*.ap_
 # Paperclip tooling framework
 /paperclip
 gradle/gradle-daemon-jvm.properties

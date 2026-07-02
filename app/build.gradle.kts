@@ -4,6 +4,12 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
+val localProperties = rootProject.file("local.properties")
+val mapboxAccessToken: String = if (localProperties.exists()) {
+    java.util.Properties().apply { load(localProperties.inputStream()) }
+        .getProperty("MAPBOX_ACCESS_TOKEN", "")
+} else ""
+
 android {
     namespace = "com.example.umbra"
     compileSdk = 36
@@ -13,6 +19,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"${mapboxAccessToken}\"")
     }
 
     buildTypes {
@@ -28,7 +35,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
