@@ -88,4 +88,14 @@ class BattleManager(private val context: Context) {
         val payload = Payload.fromBytes(attackName.toByteArray())
         connectionsClient.sendPayload(endpointId, payload)
     }
+
+    fun stopAdvertising() {
+        connectionsClient.stopAdvertising()
+        Log.d(TAG, "Parou de Hospedar (Advertising stopped)")
+    }
+
+    fun stopDiscovery() {
+        connectionsClient.stopDiscovery()
+        Log.d(TAG, "Parou de Procurar (Discovery stopped)")
+    }
 }
