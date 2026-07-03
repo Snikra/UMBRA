@@ -14,3 +14,5 @@ local.properties
 # Paperclip tooling framework
 /paperclip
 gradle/gradle-daemon-jvm.properties
+/dist
+/node_modules
