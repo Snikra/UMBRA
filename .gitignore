@@ -27,6 +27,7 @@ dist-ssr
 
 # Android / Gradle
 .gradle/
+gradle/
 build/
 local.properties
 *.apk
