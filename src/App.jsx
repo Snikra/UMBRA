@@ -4,6 +4,7 @@ import ExplorerTab from './components/ExplorerTab'
 import InventoryTab from './components/InventoryTab'
 import QRCodeOverlay from './components/QRCodeOverlay'
 import CharacterCreation from './components/CharacterCreation'
+import IntroScreen from './components/IntroScreen'
 import './App.css'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [isRolling, setIsRolling] = useState(false)
   const [log, setLog] = useState(["Você encontrou um Daemon de Baixo Nível!"])
   const [showQR, setShowQR] = useState(false)
+  const [hasSeenIntro, setHasSeenIntro] = useState(false)
   const [hasCreatedCharacter, setHasCreatedCharacter] = useState(false)
   const [personalTragedy, setPersonalTragedy] = useState(null)
   
@@ -64,6 +66,10 @@ function App() {
     setPersonalTragedy(tragedyId)
     setHasCreatedCharacter(true)
     setLog([`Você despertou! Sua tragédia (${tragedyId}) moldará seu caminho. Uma fenda se abriu à sua frente!`])
+  }
+
+  if (!hasSeenIntro) {
+    return <IntroScreen onFinishIntro={() => setHasSeenIntro(true)} />
   }
 
   if (!hasCreatedCharacter) {
