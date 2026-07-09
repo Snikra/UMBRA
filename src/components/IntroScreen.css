@@ -68,19 +68,25 @@
   animation: titleGlow 2s ease-in-out infinite alternate;
 }
 
-/* Animações de texto */
+/* Animações de texto - COM ACELERAÇÃO DE HARDWARE (GPU) */
 .fade-in {
   opacity: 0;
   animation: fadeInAnim 1.5s forwards;
+  will-change: opacity, transform;
+  transform: translateZ(0); /* Força a renderização em layer separada na GPU */
 }
 
 .visible {
   opacity: 1;
+  will-change: opacity, transform;
+  transform: translateZ(0);
 }
 
 .fade-out {
   opacity: 0;
   transition: opacity 1.5s ease;
+  will-change: opacity, transform;
+  transform: translateZ(0);
 }
 
 @keyframes fadeInAnim {

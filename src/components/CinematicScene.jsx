@@ -1,7 +1,8 @@
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect, memo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
+import { MUSIC_DROP_TIME } from '../config.js';
 
 // ─── POSIÇÃO DA LUA ─────────────────────────────────────────────────────────
 const MOON_POS = [0, 28, -12];
@@ -215,11 +216,7 @@ function AshParticles({ count = 500, matRef }) {
 }
 
 // ─── CONTROLADOR FLUIDO ──────────────────────────────────────────────────────
-// A câmera sobe continuamente baseada no tempo total desde o início.
-// Duração total da intro: ~38 segundos (6 frases com fade in/out).
-const TOTAL_DURATION = 46; // segundos
-
-function Director({ currentLine, isFinal, moonMat, particlesMat, glow1, glow2, ambLight, windowMats, hasStarted }) {
+function Director({ currentLine, isFinal, moonMat, particlesMat, glow1, glow2, ambLight, windowMats, hasStarted, audioRef }) {
   const { camera } = useThree();
   const startTime = useRef(null);
   const mouse = useRef({ x: 0, y: 0 });
@@ -242,10 +239,15 @@ function Director({ currentLine, isFinal, moonMat, particlesMat, glow1, glow2, a
     }
     
     if (startTime.current === null) startTime.current = clock.getElapsedTime();
-    const elapsed = clock.getElapsedTime() - startTime.current;
+    let elapsed = clock.getElapsedTime() - startTime.current;
 
-    // Progress contínuo de 0 → 1 ao longo da intro inteira
-    let progress = Math.min(elapsed / TOTAL_DURATION, 1.0);
+    // Sincronismo PERFEITO com a música, ancorado no audioRef
+    if (audioRef && audioRef.current && audioRef.current.currentTime > 0) {
+       elapsed = audioRef.current.currentTime;
+    }
+
+    // Progress contínuo de 0 a 1 usando a configuração de Drop da Música
+    let progress = Math.min(elapsed / MUSIC_DROP_TIME, 1.0);
 
     // Se o botão final apareceu, fixa em 1.0
     if (isFinal) progress = 1.0;
@@ -289,8 +291,7 @@ function Director({ currentLine, isFinal, moonMat, particlesMat, glow1, glow2, a
   return null;
 }
 
-// ─── CENA PRINCIPAL ──────────────────────────────────────────────────────────
-export default function CinematicScene({ currentLine = 0, isFinal = false, hasStarted = false }) {
+const CinematicScene = memo(function CinematicScene({ isFinal = false, hasStarted = false, audioRef }) {
   const moonMat = useRef(), particlesMat = useRef();
   const glow1 = useRef(), glow2 = useRef();
   const ambLight = useRef();
@@ -324,7 +325,6 @@ export default function CinematicScene({ currentLine = 0, isFinal = false, hasSt
       <AshParticles count={500} matRef={particlesMat} />
 
       <Director
-        currentLine={currentLine}
         isFinal={isFinal}
         moonMat={moonMat}
         particlesMat={particlesMat}
@@ -333,7 +333,10 @@ export default function CinematicScene({ currentLine = 0, isFinal = false, hasSt
         ambLight={ambLight}
         windowMats={windowMats}
         hasStarted={hasStarted}
+        audioRef={audioRef}
       />
     </Canvas>
   );
-}
+});
+
+export default CinematicScene;

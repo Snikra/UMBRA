@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">umbra</string>
+    <string name="title_activity_main">umbra</string>
+    <string name="package_name">com.umbra.game</string>
+    <string name="custom_url_scheme">com.umbra.game</string>
+</resources>

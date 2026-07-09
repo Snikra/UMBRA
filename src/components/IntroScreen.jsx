@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense, useRef } from 'react';
 import './IntroScreen.css';
+import themeAudio from '../assets/theme.mp3';
 
 const storyLines = [
   "O tempo é uma prisão frágil...",
@@ -9,6 +10,8 @@ const storyLines = [
   "Hoje, o ciclo de dez mil anos se completa.\nO Eclipse Sanguíneo rasgou o Véu.\nO Corvo está livre. E suas marionetes já caminham entre nós.",
   "A maioria continua cega, ignorando a fenda e os monstros que espreitam nas esquinas da nossa cidade.\nMas a luz vermelha tocou você."
 ];
+
+import { MUSIC_DROP_TIME } from '../config.js';
 
 // Lazy load da cena 3D para não bloquear a intro
 const CinematicScene = React.lazy(() => import('./CinematicScene'));
@@ -26,7 +29,7 @@ export default function IntroScreen({ onFinishIntro }) {
       audioRef.current.volume = 0.5;
       audioRef.current.play().catch(err => {
         console.warn("Erro no play da tag principal, tentando fallback de Audio JS puro:", err);
-        const fallbackAudio = new Audio("/theme.mp3");
+        const fallbackAudio = new Audio(themeAudio);
         fallbackAudio.volume = 0.5;
         fallbackAudio.play().catch(e => console.error("Fallback também falhou:", e));
       });
@@ -36,9 +39,15 @@ export default function IntroScreen({ onFinishIntro }) {
   useEffect(() => {
     if (!hasStarted) return;
     
+    // Quando os textos acabam, seguramos o suspense até o drop da música!
     if (currentLine >= storyLines.length) {
-      setShowButton(true);
-      return;
+      const checkAudioInterval = setInterval(() => {
+        if (audioRef.current && audioRef.current.currentTime >= MUSIC_DROP_TIME) {
+          setShowButton(true);
+          clearInterval(checkAudioInterval);
+        }
+      }, 100);
+      return () => clearInterval(checkAudioInterval);
     }
 
     const fadeInTimeout = setTimeout(() => {
@@ -65,11 +74,11 @@ export default function IntroScreen({ onFinishIntro }) {
 
   return (
     <div className="intro-container">
-      {/* Áudio da Cinematic em MP3 puro - suportado nativamente sem bloqueios estranhos */}
-      <audio ref={audioRef} src={`/theme.mp3?v=${Date.now()}`} preload="auto" />
+      {/* Áudio da Cinematic em MP3 puro via import direto (para bypass de cache) */}
+      <audio ref={audioRef} src={themeAudio} preload="auto" />
       {/* Cena 3D de fundo */}
       <Suspense fallback={<div className="intro-bg-fallback" />}>
-        <CinematicScene currentLine={currentLine} isFinal={showButton} hasStarted={hasStarted} />
+        <CinematicScene isFinal={showButton} hasStarted={hasStarted} audioRef={audioRef} />
       </Suspense>
 
       {/* Overlay escuro para legibilidade do texto */}
