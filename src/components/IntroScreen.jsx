@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import './IntroScreen.css';
-import scene1 from '../assets/cinematic/scene1.png';
-import scene2 from '../assets/cinematic/scene2.png';
-import scene3 from '../assets/cinematic/scene3.png';
 
 const storyLines = [
   "O tempo é uma prisão frágil...",
@@ -13,35 +10,35 @@ const storyLines = [
   "A maioria continua cega, ignorando a fenda e os monstros que espreitam nas esquinas da nossa cidade.\nMas a luz vermelha tocou você."
 ];
 
-// Mapeia o índice do texto para a imagem de fundo correspondente
-const getSceneForLine = (index) => {
-  if (index <= 2) return scene1; // O passado / Ambição sombria
-  if (index === 3) return scene2; // Prisão do tempo de Crona
-  return scene3; // O presente / Eclipse
-};
+// Lazy load da cena 3D para não bloquear a intro
+const CinematicScene = React.lazy(() => import('./CinematicScene'));
 
 export default function IntroScreen({ onFinishIntro }) {
   const [currentLine, setCurrentLine] = useState(0);
-  const [fadeState, setFadeState] = useState('fade-in'); // 'fade-in', 'visible', 'fade-out'
+  const [fadeState, setFadeState] = useState('fade-in');
   const [showButton, setShowButton] = useState(false);
-  const [currentBg, setCurrentBg] = useState(scene1);
-  const [bgFade, setBgFade] = useState('bg-visible');
+  const [hasStarted, setHasStarted] = useState(false);
+  const audioRef = useRef(null);
+
+  const handleStart = () => {
+    setHasStarted(true);
+    if (audioRef.current) {
+      audioRef.current.volume = 0.5;
+      audioRef.current.play().catch(err => {
+        console.warn("Erro no play da tag principal, tentando fallback de Audio JS puro:", err);
+        const fallbackAudio = new Audio("/theme.mp3");
+        fallbackAudio.volume = 0.5;
+        fallbackAudio.play().catch(e => console.error("Fallback também falhou:", e));
+      });
+    }
+  };
 
   useEffect(() => {
+    if (!hasStarted) return;
+    
     if (currentLine >= storyLines.length) {
       setShowButton(true);
       return;
-    }
-
-    // Change background image if it's different
-    const nextBg = getSceneForLine(currentLine);
-    if (nextBg !== currentBg) {
-      setBgFade('bg-fade-out');
-      setTimeout(() => {
-        setCurrentBg(nextBg);
-        setBgFade('bg-fade-in');
-        setTimeout(() => setBgFade('bg-visible'), 1500); // 1.5s bg transition
-      }, 1500);
     }
 
     const fadeInTimeout = setTimeout(() => {
@@ -52,35 +49,45 @@ export default function IntroScreen({ onFinishIntro }) {
 
     const fadeOutTimeout = setTimeout(() => {
       setFadeState('fade-out');
-    }, fadeInTimeout + visibleTime);
+    }, 500 + visibleTime);
 
     const nextLineTimeout = setTimeout(() => {
       setCurrentLine(prev => prev + 1);
       setFadeState('fade-in');
-    }, fadeOutTimeout + 1500); 
+    }, 500 + visibleTime + 1500);
 
     return () => {
       clearTimeout(fadeInTimeout);
       clearTimeout(fadeOutTimeout);
       clearTimeout(nextLineTimeout);
     };
-  }, [currentLine, currentBg]);
+  }, [currentLine, hasStarted]);
 
   return (
     <div className="intro-container">
-      {/* Background Cinematográfico */}
-      <div 
-        className={`intro-background ${bgFade}`} 
-        style={{ backgroundImage: `url(${currentBg})` }}
-      />
+      {/* Áudio da Cinematic em MP3 puro - suportado nativamente sem bloqueios estranhos */}
+      <audio ref={audioRef} src={`/theme.mp3?v=${Date.now()}`} preload="auto" />
+      {/* Cena 3D de fundo */}
+      <Suspense fallback={<div className="intro-bg-fallback" />}>
+        <CinematicScene currentLine={currentLine} isFinal={showButton} hasStarted={hasStarted} />
+      </Suspense>
+
+      {/* Overlay escuro para legibilidade do texto */}
       <div className="intro-overlay" />
 
-      {/* Conteúdo Textual */}
+      {/* Conteúdo textual ou Botão Iniciar */}
       <div className="intro-content-wrapper">
-        {!showButton ? (
+        {!hasStarted ? (
+          <div className="intro-start-screen fade-in">
+            <h1>A Queda do Véu</h1>
+            <button className="wake-up-button" onClick={handleStart}>
+              INICIAR JORNADA
+            </button>
+          </div>
+        ) : !showButton ? (
           <div className={`intro-text ${fadeState}`}>
             {storyLines[currentLine] && storyLines[currentLine].split('\n').map((line, i) => (
-               <p key={i}>{line}</p>
+              <p key={i}>{line}</p>
             ))}
           </div>
         ) : (
@@ -92,8 +99,8 @@ export default function IntroScreen({ onFinishIntro }) {
           </div>
         )}
       </div>
-      
-      {!showButton && (
+
+      {hasStarted && !showButton && (
         <button className="skip-intro" onClick={onFinishIntro}>
           Pular Introdução &gt;&gt;
         </button>
