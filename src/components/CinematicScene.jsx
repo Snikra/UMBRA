@@ -399,17 +399,17 @@ function BloodMoon({ matRef, glow1Ref, glow2Ref, glow3Ref }) {
   return (
     <group position={MOON_POS}>
       {/* Halo ultra-suave gigante (atmosfera) */}
-      <mesh><sphereGeometry args={[14, 32, 32]} /><meshBasicMaterial ref={glow3Ref} color="#440000" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
+      <mesh><sphereGeometry args={[18, 32, 32]} /><meshBasicMaterial ref={glow3Ref} color="#440000" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
       {/* Halo externo */}
-      <mesh><sphereGeometry args={[9, 32, 32]} /><meshBasicMaterial ref={glow2Ref} color="#770000" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
+      <mesh><sphereGeometry args={[12, 32, 32]} /><meshBasicMaterial ref={glow2Ref} color="#770000" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
       {/* Halo interno brilhante */}
-      <mesh><sphereGeometry args={[6, 32, 32]} /><meshBasicMaterial ref={glow1Ref} color="#ff2200" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
+      <mesh><sphereGeometry args={[8, 32, 32]} /><meshBasicMaterial ref={glow1Ref} color="#ff2200" transparent opacity={0} blending={THREE.AdditiveBlending} side={THREE.BackSide} /></mesh>
       {/* Anel da Lua (pulsante) */}
-      <mesh ref={ringRef} rotation={[0.3, 0, 0]}><torusGeometry args={[4.2, 0.08, 8, 80]} /><meshBasicMaterial color="#ff2200" transparent opacity={0.25} /></mesh>
+      <mesh ref={ringRef} rotation={[0.3, 0, 0]}><torusGeometry args={[6.2, 0.1, 8, 80]} /><meshBasicMaterial color="#ff2200" transparent opacity={0.25} /></mesh>
       {/* Segundo anel mais largo e sutil */}
-      <mesh rotation={[-0.15, 0.4, 0.1]}><torusGeometry args={[5.5, 0.04, 8, 80]} /><meshBasicMaterial color="#ff4400" transparent opacity={0.06} /></mesh>
+      <mesh rotation={[-0.15, 0.4, 0.1]}><torusGeometry args={[8.0, 0.05, 8, 80]} /><meshBasicMaterial color="#ff4400" transparent opacity={0.06} /></mesh>
       {/* Corpo da Lua HD */}
-      <mesh ref={moonMesh}><sphereGeometry args={[3, 64, 64]} /><meshStandardMaterial ref={matRef} map={tex} roughness={0.90} metalness={0.08} emissiveMap={tex} emissive="#cc0000" emissiveIntensity={0} /></mesh>
+      <mesh ref={moonMesh}><sphereGeometry args={[4.8, 64, 64]} /><meshStandardMaterial ref={matRef} map={tex} roughness={0.90} metalness={0.08} emissiveMap={tex} emissive="#cc0000" emissiveIntensity={0} /></mesh>
     </group>
   );
 }
@@ -429,8 +429,8 @@ function GodRays({ matRef }) {
     const count = 6;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
-      const length = 12 + Math.random() * 8;
-      const width = 0.3 + Math.random() * 0.4;
+      const length = 18 + Math.random() * 10;
+      const width = 0.4 + Math.random() * 0.5;
       r.push({ angle, length, width, key: i });
     }
     return r;

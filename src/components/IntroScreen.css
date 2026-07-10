@@ -40,6 +40,7 @@
   max-width: 680px;
   text-align: center;
   transition: opacity 1.5s ease-in-out;
+  margin-top: 35vh; /* Empurra o texto para a parte de baixo da tela */
 }
 
 .intro-text p {
