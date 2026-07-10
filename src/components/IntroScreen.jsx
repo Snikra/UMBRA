@@ -5,20 +5,20 @@ import narratorAudio from '../assets/narrator.mp3';
 import { MUSIC_DROP_TIME } from '../config.js';
 
 const storyLines = [
-  "O tempo é uma prisão frágil...",
-  "Por eras, a humanidade caminhou cega. Construímos cidades de concreto e asfalto, acreditando que éramos os donos do mundo.",
-  "Mas nas sombras além do Véu, ele esperava. Um homem consumido pela própria ambição, que sacrificou a inocência para abrir as portas de uma Era de Demônios.",
-  "A Deusa Crona o isolou em uma linha do tempo morta. Sob um céu envelhecido, ele aguardou o Alinhamento das Esferas...",
-  "Hoje, o ciclo de dez mil anos se completa.\nO Eclipse Sanguíneo rasgou o Véu.\nO Corvo está livre. E suas marionetes já caminham entre nós.",
-  "A maioria continua cega, ignorando a fenda e os monstros que espreitam nas esquinas da nossa cidade.\nMas a luz vermelha tocou você."
+  { text: "O tempo é uma prisão frágil...", start: 0, end: 3.5 },
+  { text: "Por eras, a humanidade caminhou cega. Construímos cidades de concreto e asfalto, acreditando que éramos os donos do mundo.", start: 4.5, end: 11.5 },
+  { text: "Mas nas sombras além do Véu, ele esperava. Um homem consumido pela própria ambição, que sacrificou a inocência para abrir as portas de uma Era de Demônios.", start: 12.5, end: 21 },
+  { text: "A Deusa Crona o isolou em uma linha do tempo morta. Sob um céu envelhecido, ele aguardou o Alinhamento das Esferas...", start: 22, end: 28 },
+  { text: "Hoje, o ciclo de dez mil anos se completa.\nO Eclipse Sanguíneo rasgou o Véu.\nO Corvo está livre. E suas marionetes já caminham entre nós.", start: 29, end: 37 },
+  { text: "A maioria continua cega, ignorando a fenda e os monstros que espreitam nas esquinas da nossa cidade.\nMas a luz vermelha tocou você.", start: 38, end: 46 }
 ];
 
 // Lazy load da cena 3D para não bloquear a intro
 const CinematicScene = React.lazy(() => import('./CinematicScene'));
 
 export default function IntroScreen({ onFinishIntro }) {
-  const [currentLine, setCurrentLine] = useState(0);
-  const [fadeState, setFadeState] = useState('fade-in');
+  const [currentLine, setCurrentLine] = useState(-1);
+  const [fadeState, setFadeState] = useState('fade-out');
   const [showButton, setShowButton] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const audioRef = useRef(null);
@@ -63,41 +63,41 @@ export default function IntroScreen({ onFinishIntro }) {
     }
   };
 
+  const handleTimeUpdate = () => {
+    if (!narratorRef.current) return;
+    const t = narratorRef.current.currentTime;
+    
+    // Procura qual frase deve estar ativa neste milissegundo exato
+    const activeIndex = storyLines.findIndex(s => t >= s.start && t < s.end);
+    
+    if (activeIndex !== -1) {
+      if (currentLine !== activeIndex) {
+        setCurrentLine(activeIndex);
+        setFadeState('fade-in');
+      } else if (fadeState !== 'fade-in') {
+        // Se a classe foi tirada por algum motivo, garante que está com fade-in
+        setFadeState('fade-in');
+      }
+    } else {
+      // Se não tem texto para esse milissegundo (pausas ou final), da um fade out no texto atual
+      if (fadeState !== 'fade-out') {
+        setFadeState('fade-out');
+      }
+    }
+  };
+
   useEffect(() => {
     if (!hasStarted) return;
     
-    // Quando os textos acabam, seguramos o suspense até o drop da música!
-    if (currentLine >= storyLines.length) {
-      const checkAudioInterval = setInterval(() => {
-        if (audioRef.current && audioRef.current.currentTime >= MUSIC_DROP_TIME) {
-          setShowButton(true);
-          clearInterval(checkAudioInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkAudioInterval);
-    }
-
-    const fadeInTimeout = setTimeout(() => {
-      setFadeState('visible');
-    }, 500);
-
-    const visibleTime = storyLines[currentLine].length > 60 ? 5500 : 3500;
-
-    const fadeOutTimeout = setTimeout(() => {
-      setFadeState('fade-out');
-    }, 500 + visibleTime);
-
-    const nextLineTimeout = setTimeout(() => {
-      setCurrentLine(prev => prev + 1);
-      setFadeState('fade-in');
-    }, 500 + visibleTime + 1500);
-
-    return () => {
-      clearTimeout(fadeInTimeout);
-      clearTimeout(fadeOutTimeout);
-      clearTimeout(nextLineTimeout);
-    };
-  }, [currentLine, hasStarted]);
+    // Mostra o botão final só quando o áudio principal atingir o Drop (ou no final da narração)
+    const checkAudioInterval = setInterval(() => {
+      if (audioRef.current && audioRef.current.currentTime >= MUSIC_DROP_TIME) {
+        setShowButton(true);
+        clearInterval(checkAudioInterval);
+      }
+    }, 100);
+    return () => clearInterval(checkAudioInterval);
+  }, [hasStarted]);
 
   return (
     <div className="intro-container">
@@ -108,6 +108,7 @@ export default function IntroScreen({ onFinishIntro }) {
         ref={narratorRef} 
         src={narratorAudio} 
         preload="auto" 
+        onTimeUpdate={handleTimeUpdate}
         onEnded={() => {
           // Quando a narração acabar, sobe o volume da música
           setMusicVolume(0.5);
@@ -132,7 +133,7 @@ export default function IntroScreen({ onFinishIntro }) {
           </div>
         ) : !showButton ? (
           <div className={`intro-text ${fadeState}`}>
-            {storyLines[currentLine] && storyLines[currentLine].split('\n').map((line, i) => (
+            {storyLines[currentLine] && storyLines[currentLine].text.split('\n').map((line, i) => (
               <p key={i}>{line}</p>
             ))}
           </div>
