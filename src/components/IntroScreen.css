@@ -21,7 +21,7 @@
 .intro-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 80%);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 85%);
   z-index: 1;
   pointer-events: none;
 }
