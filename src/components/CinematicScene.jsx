@@ -81,134 +81,252 @@ function createWindowTexture(cols, rows) {
 }
 
 // ─── PALETA DE CORES DOS PRÉDIOS ─────────────────────────────────────────────
-const BUILDING_COLORS = ['#2a2a40', '#252538', '#302a3a', '#1e2035', '#2d2840', '#28253a'];
+const BUILDING_COLORS = ['#2a2a40', '#252538', '#302a3a', '#1e2035', '#2d2840', '#28253a', '#222240', '#2a253d'];
 
-// ─── PRÉDIOS COM DETALHES ARQUITETÔNICOS ─────────────────────────────────────
+// ─── PRÉDIOS COM ARQUITETURA ESCALONADA ──────────────────────────────────────
 function CityBuildings({ windowMatRefs }) {
-  const buildings = useMemo(() => {
-    const list = [];
-    const left = [
-      { x: -5,   z: 8,   w: 4.5, h: 10, d: 6, c: 4, r: 6 },
-      { x: -6,   z: -1,  w: 5,   h: 16, d: 7, c: 5, r: 10 },
-      { x: -5,   z: -10, w: 4,   h: 8,  d: 5, c: 3, r: 5 },
-      { x: -6.5, z: -18, w: 5.5, h: 20, d: 7, c: 5, r: 12 },
-      { x: -5,   z: -27, w: 4,   h: 12, d: 5, c: 4, r: 8 },
-      { x: -6,   z: -35, w: 5,   h: 18, d: 6, c: 5, r: 11 },
+  const buildingData = useMemo(() => {
+    // Cada prédio agora tem múltiplos "segmentos" empilhados (setbacks)
+    const defs = [
+      // ESQUERDA — primeiro plano
+      { x: -5,   z: 8,   segments: [{ w: 4.5, h: 10, d: 6 }], c: 4, r: 6 },
+      { x: -6,   z: -1,  segments: [{ w: 5, h: 11, d: 7 }, { w: 4, h: 5, d: 5.5, ox: 0.3 }], c: 5, r: 10 },
+      { x: -5,   z: -10, segments: [{ w: 4, h: 8, d: 5 }], c: 3, r: 5 },
+      { x: -6.5, z: -18, segments: [{ w: 5.5, h: 14, d: 7 }, { w: 4.5, h: 4, d: 5.5, ox: 0.2 }, { w: 3.5, h: 3, d: 4, ox: 0.5 }], c: 5, r: 12 },
+      { x: -5,   z: -27, segments: [{ w: 4, h: 12, d: 5 }], c: 4, r: 8 },
+      { x: -6,   z: -35, segments: [{ w: 5, h: 13, d: 6 }, { w: 4, h: 5, d: 5, ox: 0.3 }], c: 5, r: 11 },
+      // ESQUERDA — segundo plano (profundidade)
+      { x: -9,   z: 5,   segments: [{ w: 4, h: 14, d: 5 }], c: 3, r: 9 },
+      { x: -10,  z: -8,  segments: [{ w: 5, h: 20, d: 6 }, { w: 4, h: 5, d: 4.5, ox: 0.3 }], c: 4, r: 13 },
+      { x: -9,   z: -22, segments: [{ w: 4.5, h: 16, d: 5.5 }], c: 4, r: 10 },
+      { x: -10,  z: -32, segments: [{ w: 5, h: 24, d: 6 }, { w: 4, h: 6, d: 5, ox: 0.3 }, { w: 3, h: 4, d: 3.5, ox: 0.6 }], c: 5, r: 15 },
+      // DIREITA — primeiro plano
+      { x: 5,    z: 7,   segments: [{ w: 4.5, h: 9, d: 6 }, { w: 3.5, h: 4, d: 5, ox: -0.2 }], c: 4, r: 8 },
+      { x: 6,    z: -2,  segments: [{ w: 5, h: 13, d: 7 }, { w: 4, h: 5, d: 5.5, ox: -0.3 }], c: 5, r: 11 },
+      { x: 5,    z: -11, segments: [{ w: 4, h: 9, d: 5 }], c: 3, r: 6 },
+      { x: 6.5,  z: -20, segments: [{ w: 5.5, h: 15, d: 7 }, { w: 4.5, h: 5, d: 5.5, ox: -0.2 }, { w: 3.5, h: 3, d: 4, ox: -0.5 }], c: 5, r: 14 },
+      { x: 5,    z: -28, segments: [{ w: 4, h: 15, d: 5 }], c: 4, r: 9 },
+      { x: 6,    z: -36, segments: [{ w: 5, h: 10, d: 6 }, { w: 4, h: 4, d: 5, ox: -0.3 }], c: 5, r: 9 },
+      // DIREITA — segundo plano (profundidade)
+      { x: 9,    z: 4,   segments: [{ w: 4, h: 18, d: 5 }], c: 3, r: 11 },
+      { x: 10,   z: -6,  segments: [{ w: 5, h: 22, d: 6 }, { w: 4, h: 6, d: 4.5, ox: -0.3 }], c: 4, r: 14 },
+      { x: 9,    z: -18, segments: [{ w: 4.5, h: 12, d: 5.5 }], c: 4, r: 8 },
+      { x: 10,   z: -30, segments: [{ w: 5, h: 26, d: 6 }, { w: 4, h: 7, d: 5, ox: -0.3 }, { w: 3, h: 4, d: 3.5, ox: -0.6 }], c: 5, r: 16 },
     ];
-    const right = [
-      { x: 5,    z: 7,   w: 4.5, h: 13, d: 6, c: 4, r: 8 },
-      { x: 6,    z: -2,  w: 5,   h: 18, d: 7, c: 5, r: 11 },
-      { x: 5,    z: -11, w: 4,   h: 9,  d: 5, c: 3, r: 6 },
-      { x: 6.5,  z: -20, w: 5.5, h: 22, d: 7, c: 5, r: 14 },
-      { x: 5,    z: -28, w: 4,   h: 15, d: 5, c: 4, r: 9 },
-      { x: 6,    z: -36, w: 5,   h: 14, d: 6, c: 5, r: 9 },
-    ];
-    [...left, ...right].forEach((b, i) => {
-      list.push({
-        id: i, position: [b.x, b.h / 2, b.z], size: [b.w, b.h, b.d],
-        tex: createWindowTexture(b.c, b.r),
+
+    return defs.map((def, i) => {
+      // Calcula a altura total somando os segmentos
+      const totalHeight = def.segments.reduce((sum, seg) => sum + seg.h, 0);
+      // Gera a textura para o corpo principal
+      const tex = createWindowTexture(def.c, def.r);
+      return {
+        id: i, def, totalHeight, tex,
         color: BUILDING_COLORS[i % BUILDING_COLORS.length],
-        height: b.h, width: b.w, depth: b.d, x: b.x, z: b.z,
-        hasAntenna: b.h >= 15, // Prédios altos ganham antena
-      });
+      };
     });
-    return list;
   }, []);
 
   return (
     <group>
-      {buildings.map((b, i) => (
-        <group key={b.id}>
-          {/* Corpo do prédio */}
-          <mesh position={b.position}>
-            <boxGeometry args={b.size} />
-            <meshStandardMaterial
-              ref={(el) => { if (el && windowMatRefs.current) windowMatRefs.current[i] = el; }}
-              map={b.tex}
-              emissiveMap={b.tex}
-              emissive="#ffcc88"
-              emissiveIntensity={1.0}
-              roughness={0.80}
-              metalness={0.08}
-              color={b.color}
-            />
-          </mesh>
+      {buildingData.map((b, i) => {
+        const { def, totalHeight, tex, color } = b;
+        let currentY = 0;
 
-          {/* Cornija — borda decorativa no topo do prédio */}
-          <mesh position={[b.x, b.height + 0.12, b.z]}>
-            <boxGeometry args={[b.width + 0.4, 0.25, b.depth + 0.4]} />
-            <meshStandardMaterial color="#1a1a28" roughness={0.9} metalness={0.1} />
-          </mesh>
+        return (
+          <group key={b.id}>
+            {/* Segmentos empilhados (setbacks) */}
+            {def.segments.map((seg, si) => {
+              const yPos = currentY + seg.h / 2;
+              const xOffset = seg.ox || 0;
+              currentY += seg.h;
+              const isBase = si === 0;
+              const segTex = isBase ? tex : createWindowTexture(Math.max(2, def.c - 1), Math.max(2, Math.floor(seg.h * 0.6)));
 
-          {/* Antena com luz vermelha piscante nos prédios altos */}
-          {b.hasAntenna && (
-            <group position={[b.x, b.height, b.z]}>
-              {/* Mastro da antena */}
-              <mesh position={[0, 1.2, 0]}>
-                <cylinderGeometry args={[0.04, 0.06, 2.4, 6]} />
-                <meshStandardMaterial color="#333" metalness={0.8} roughness={0.3} />
-              </mesh>
-              {/* Luz vermelha de aviso no topo */}
-              <mesh position={[0, 2.5, 0]}>
-                <sphereGeometry args={[0.1, 8, 8]} />
-                <meshBasicMaterial color="#ff0000" />
-              </mesh>
-              {/* Glow da luz */}
-              <mesh position={[0, 2.5, 0]}>
-                <sphereGeometry args={[0.35, 8, 8]} />
-                <meshBasicMaterial color="#ff0000" transparent opacity={0.15} blending={THREE.AdditiveBlending} />
-              </mesh>
-            </group>
-          )}
+              return (
+                <group key={si}>
+                  {/* Corpo do segmento */}
+                  <mesh position={[def.x + xOffset, yPos, def.z]}>
+                    <boxGeometry args={[seg.w, seg.h, seg.d]} />
+                    <meshStandardMaterial
+                      ref={isBase ? (el) => { if (el && windowMatRefs.current) windowMatRefs.current[i] = el; } : undefined}
+                      map={segTex}
+                      emissiveMap={segTex}
+                      emissive="#ffcc88"
+                      emissiveIntensity={1.0}
+                      roughness={0.78}
+                      metalness={0.10}
+                      color={color}
+                    />
+                  </mesh>
 
-          {/* Caixas de ar-condicionado (aleatórias nas laterais) */}
-          {b.height > 10 && i % 3 === 0 && (
-            <>
-              <mesh position={[b.x + b.width / 2 + 0.2, b.height * 0.4, b.z]}>
-                <boxGeometry args={[0.5, 0.35, 0.6]} />
-                <meshStandardMaterial color="#2a2a30" roughness={0.95} />
-              </mesh>
-              <mesh position={[b.x + b.width / 2 + 0.2, b.height * 0.7, b.z + 1.5]}>
-                <boxGeometry args={[0.5, 0.35, 0.6]} />
-                <meshStandardMaterial color="#252530" roughness={0.95} />
-              </mesh>
-            </>
-          )}
-        </group>
-      ))}
+                  {/* Cornija/ledge no topo de cada segmento */}
+                  <mesh position={[def.x + xOffset, currentY + 0.08, def.z]}>
+                    <boxGeometry args={[seg.w + 0.3, 0.16, seg.d + 0.3]} />
+                    <meshStandardMaterial color="#1a1a28" roughness={0.85} metalness={0.15} />
+                  </mesh>
 
+                  {/* Faixa decorativa horizontal no meio do segmento */}
+                  {seg.h > 8 && (
+                    <mesh position={[def.x + xOffset, yPos, def.z + seg.d / 2 + 0.01]}>
+                      <planeGeometry args={[seg.w - 0.2, 0.12]} />
+                      <meshBasicMaterial color="#3a3a50" />
+                    </mesh>
+                  )}
+                </group>
+              );
+            })}
+
+            {/* ── DETALHES DO TOPO ── */}
+            {(() => {
+              const topSeg = def.segments[def.segments.length - 1];
+              const topOx = topSeg.ox || 0;
+              const topW = topSeg.w;
+              const topD = topSeg.d;
+
+              return (
+                <group>
+                  {/* Casa de máquinas do elevador */}
+                  {totalHeight > 12 && (
+                    <mesh position={[def.x + topOx + topW * 0.15, totalHeight + 1, def.z - topD * 0.15]}>
+                      <boxGeometry args={[1.4, 2, 1.6]} />
+                      <meshStandardMaterial color="#1e1e30" roughness={0.90} metalness={0.1} />
+                    </mesh>
+                  )}
+
+                  {/* Caixa d'água */}
+                  {totalHeight > 10 && (
+                    <group position={[def.x + topOx - topW * 0.2, totalHeight, def.z + topD * 0.15]}>
+                      {/* Base/pernas da caixa d'água */}
+                      <mesh position={[-0.3, 0.6, -0.3]}>
+                        <cylinderGeometry args={[0.05, 0.05, 1.2, 4]} />
+                        <meshStandardMaterial color="#444" metalness={0.7} roughness={0.4} />
+                      </mesh>
+                      <mesh position={[0.3, 0.6, -0.3]}>
+                        <cylinderGeometry args={[0.05, 0.05, 1.2, 4]} />
+                        <meshStandardMaterial color="#444" metalness={0.7} roughness={0.4} />
+                      </mesh>
+                      <mesh position={[-0.3, 0.6, 0.3]}>
+                        <cylinderGeometry args={[0.05, 0.05, 1.2, 4]} />
+                        <meshStandardMaterial color="#444" metalness={0.7} roughness={0.4} />
+                      </mesh>
+                      <mesh position={[0.3, 0.6, 0.3]}>
+                        <cylinderGeometry args={[0.05, 0.05, 1.2, 4]} />
+                        <meshStandardMaterial color="#444" metalness={0.7} roughness={0.4} />
+                      </mesh>
+                      {/* Tanque */}
+                      <mesh position={[0, 1.5, 0]}>
+                        <cylinderGeometry args={[0.5, 0.5, 0.8, 8]} />
+                        <meshStandardMaterial color="#2a3040" roughness={0.85} metalness={0.2} />
+                      </mesh>
+                    </group>
+                  )}
+
+                  {/* Antena com luz vermelha */}
+                  {totalHeight >= 16 && (
+                    <group position={[def.x + topOx, totalHeight, def.z]}>
+                      <mesh position={[0, 1.5, 0]}>
+                        <cylinderGeometry args={[0.03, 0.05, 3, 6]} />
+                        <meshStandardMaterial color="#333" metalness={0.8} roughness={0.3} />
+                      </mesh>
+                      <mesh position={[0, 3.1, 0]}>
+                        <sphereGeometry args={[0.08, 8, 8]} />
+                        <meshBasicMaterial color="#ff0000" />
+                      </mesh>
+                      <mesh position={[0, 3.1, 0]}>
+                        <sphereGeometry args={[0.4, 8, 8]} />
+                        <meshBasicMaterial color="#ff0000" transparent opacity={0.12} blending={THREE.AdditiveBlending} />
+                      </mesh>
+                    </group>
+                  )}
+
+                  {/* Grades de ventilação no topo */}
+                  {totalHeight > 8 && i % 2 === 0 && (
+                    <mesh position={[def.x + topOx + topW * 0.25, totalHeight + 0.2, def.z + topD * 0.25]}>
+                      <boxGeometry args={[0.6, 0.4, 0.6]} />
+                      <meshStandardMaterial color="#2a2a35" roughness={0.95} metalness={0.3} />
+                    </mesh>
+                  )}
+                </group>
+              );
+            })()}
+
+            {/* Unidades de ar-condicionado na fachada */}
+            {totalHeight > 8 && (
+              <>
+                {[0.25, 0.45, 0.65, 0.85].map((pct, ai) => {
+                  if (Math.random() > 0.5) return null;
+                  const seg0 = def.segments[0];
+                  const side = def.x < 0 ? seg0.w / 2 + 0.22 : -(seg0.w / 2 + 0.22);
+                  return (
+                    <mesh key={ai} position={[def.x + side, totalHeight * pct, def.z + (ai % 2 - 0.5) * seg0.d * 0.5]}>
+                      <boxGeometry args={[0.4, 0.3, 0.5]} />
+                      <meshStandardMaterial color="#2a2a32" roughness={0.95} metalness={0.15} />
+                    </mesh>
+                  );
+                })}
+              </>
+            )}
+          </group>
+        );
+      })}
+
+      {/* ── RUA ── */}
       {/* Calçadas elevadas */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4.2, 0.08, -10]}>
-        <planeGeometry args={[3, 80]} />
+        <planeGeometry args={[3.5, 90]} />
         <meshStandardMaterial color="#252525" roughness={0.90} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4.2, 0.08, -10]}>
-        <planeGeometry args={[3, 80]} />
+        <planeGeometry args={[3.5, 90]} />
         <meshStandardMaterial color="#252525" roughness={0.90} />
       </mesh>
 
       {/* Meio-fio */}
-      <mesh position={[-2.7, 0.06, -10]}>
-        <boxGeometry args={[0.12, 0.12, 80]} />
+      <mesh position={[-2.45, 0.06, -10]}>
+        <boxGeometry args={[0.14, 0.14, 90]} />
         <meshStandardMaterial color="#3a3a3a" roughness={0.85} />
       </mesh>
-      <mesh position={[2.7, 0.06, -10]}>
-        <boxGeometry args={[0.12, 0.12, 80]} />
+      <mesh position={[2.45, 0.06, -10]}>
+        <boxGeometry args={[0.14, 0.14, 90]} />
         <meshStandardMaterial color="#3a3a3a" roughness={0.85} />
       </mesh>
 
       {/* Asfalto */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, -10]}>
-        <planeGeometry args={[5.4, 80]} />
+        <planeGeometry args={[4.9, 90]} />
         <meshStandardMaterial color="#1c1c1c" roughness={0.92} />
       </mesh>
 
       {/* Faixas da rua */}
-      {[-6, 0, 6, 12, 18, 24, 30].map((z, i) => (
+      {[-6, 0, 6, 12, 18, 24, 30, 36].map((z, i) => (
         <mesh key={`line-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, -z]}>
           <planeGeometry args={[0.15, 2.5]} />
           <meshBasicMaterial color="#555555" />
         </mesh>
+      ))}
+
+      {/* Postes de luz na rua */}
+      {[8, 0, -10, -20, -30].map((z, i) => (
+        <group key={`post-${i}`}>
+          {/* Poste esquerdo */}
+          <mesh position={[-2.6, 2.5, z]}>
+            <cylinderGeometry args={[0.04, 0.06, 5, 6]} />
+            <meshStandardMaterial color="#333" metalness={0.7} roughness={0.4} />
+          </mesh>
+          <mesh position={[-2.6, 5.1, z]}>
+            <sphereGeometry args={[0.12, 8, 8]} />
+            <meshBasicMaterial color="#ffdd88" />
+          </mesh>
+          {/* Poste direito */}
+          <mesh position={[2.6, 2.5, z]}>
+            <cylinderGeometry args={[0.04, 0.06, 5, 6]} />
+            <meshStandardMaterial color="#333" metalness={0.7} roughness={0.4} />
+          </mesh>
+          <mesh position={[2.6, 5.1, z]}>
+            <sphereGeometry args={[0.12, 8, 8]} />
+            <meshBasicMaterial color="#ffdd88" />
+          </mesh>
+        </group>
       ))}
     </group>
   );
