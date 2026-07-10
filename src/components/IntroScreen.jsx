@@ -21,6 +21,7 @@ export default function IntroScreen({ onFinishIntro }) {
   const [fadeState, setFadeState] = useState('fade-out');
   const [showButton, setShowButton] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [devTime, setDevTime] = useState(0);
   const audioRef = useRef(null);
   const narratorRef = useRef(null);
 
@@ -66,6 +67,7 @@ export default function IntroScreen({ onFinishIntro }) {
   const handleTimeUpdate = () => {
     if (!narratorRef.current) return;
     const t = narratorRef.current.currentTime;
+    setDevTime(t);
     
     // Procura qual frase deve estar ativa neste milissegundo exato
     const activeIndex = storyLines.findIndex(s => t >= s.start && t < s.end);
@@ -101,6 +103,13 @@ export default function IntroScreen({ onFinishIntro }) {
 
   return (
     <div className="intro-container">
+      {/* 🛠 DEBUG TOOL: Mostra o tempo exato do áudio para ajudar a sincronizar 🛠 */}
+      {hasStarted && (
+        <div style={{ position: 'absolute', top: 20, left: 20, color: '#00ff00', fontSize: '24px', fontWeight: 'bold', zIndex: 9999, textShadow: '0 0 5px black' }}>
+          TIME: {devTime.toFixed(1)}s
+        </div>
+      )}
+
       {/* Áudio da Cena */}
       <audio ref={audioRef} src={themeAudio} preload="auto" />
       {/* Áudio da Narração */}
