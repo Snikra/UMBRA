@@ -15,56 +15,12 @@ const storyLines = [
 // Lazy load da cena 3D para não bloquear a intro
 const CinematicScene = React.lazy(() => import('./CinematicScene'));
 
-// ─── NARRADOR (Web Speech API) ───────────────────────────────────────────────
-function speakLine(text, onEnd) {
-  // Remove quebras de linha para a voz soar contínua
-  const cleanText = text.replace(/\n/g, '. ');
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = 'pt-BR';
-  utterance.rate = 0.88;  // Um pouco mais lento para tom dramático
-  utterance.pitch = 0.85; // Tom mais grave e sombrio
-  utterance.volume = 1.0;
-
-  // Tenta encontrar uma voz masculina em PT-BR
-  const voices = speechSynthesis.getVoices();
-  const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.toLowerCase().includes('male'))
-    || voices.find(v => v.lang.startsWith('pt-BR'))
-    || voices.find(v => v.lang.startsWith('pt'))
-    || null;
-  if (ptVoice) utterance.voice = ptVoice;
-
-  utterance.onend = onEnd;
-  utterance.onerror = onEnd; // Se falhar, continua mesmo assim
-  speechSynthesis.speak(utterance);
-}
-
 export default function IntroScreen({ onFinishIntro }) {
   const [currentLine, setCurrentLine] = useState(0);
   const [fadeState, setFadeState] = useState('fade-in');
   const [showButton, setShowButton] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const audioRef = useRef(null);
-  const isNarrating = useRef(false);
-
-  // Baixa o volume da música durante a narração
-  const setMusicVolume = useCallback((vol) => {
-    if (audioRef.current) {
-      // Transição suave de volume
-      const target = vol;
-      const step = () => {
-        if (!audioRef.current) return;
-        const curr = audioRef.current.volume;
-        const diff = target - curr;
-        if (Math.abs(diff) < 0.02) {
-          audioRef.current.volume = target;
-          return;
-        }
-        audioRef.current.volume = curr + diff * 0.15;
-        requestAnimationFrame(step);
-      };
-      step();
-    }
-  }, []);
 
   const handleStart = () => {
     setHasStarted(true);
@@ -77,8 +33,6 @@ export default function IntroScreen({ onFinishIntro }) {
         fallbackAudio.play().catch(e => console.error("Fallback também falhou:", e));
       });
     }
-    // Carrega as vozes do sistema (necessário em alguns navegadores)
-    speechSynthesis.getVoices();
   };
 
   useEffect(() => {
@@ -86,10 +40,6 @@ export default function IntroScreen({ onFinishIntro }) {
     
     // Quando os textos acabam, seguramos o suspense até o drop da música!
     if (currentLine >= storyLines.length) {
-      // Restaura o volume da música para o clímax
-      setMusicVolume(0.5);
-      isNarrating.current = false;
-
       const checkAudioInterval = setInterval(() => {
         if (audioRef.current && audioRef.current.currentTime >= MUSIC_DROP_TIME) {
           setShowButton(true);
@@ -99,32 +49,14 @@ export default function IntroScreen({ onFinishIntro }) {
       return () => clearInterval(checkAudioInterval);
     }
 
-    // Fase 1: Fade in do texto
     const fadeInTimeout = setTimeout(() => {
       setFadeState('visible');
-
-      // Fase 2: Inicia a narração e baixa a música
-      setTimeout(() => {
-        setMusicVolume(0.12); // Baixa a música bastante
-        isNarrating.current = true;
-        speakLine(storyLines[currentLine], () => {
-          // Narração terminou — restaura música e faz fade out
-          isNarrating.current = false;
-          setMusicVolume(0.5);
-        });
-      }, 300);
     }, 500);
 
-    const visibleTime = storyLines[currentLine].length > 60 ? 6500 : 4000;
+    const visibleTime = storyLines[currentLine].length > 60 ? 5500 : 3500;
 
     const fadeOutTimeout = setTimeout(() => {
       setFadeState('fade-out');
-      // Se ainda estiver narrando, cancela para não sobrepor
-      if (isNarrating.current) {
-        speechSynthesis.cancel();
-        isNarrating.current = false;
-        setMusicVolume(0.5);
-      }
     }, 500 + visibleTime);
 
     const nextLineTimeout = setTimeout(() => {
@@ -136,9 +68,8 @@ export default function IntroScreen({ onFinishIntro }) {
       clearTimeout(fadeInTimeout);
       clearTimeout(fadeOutTimeout);
       clearTimeout(nextLineTimeout);
-      speechSynthesis.cancel(); // Limpa narração pendente
     };
-  }, [currentLine, hasStarted, setMusicVolume]);
+  }, [currentLine, hasStarted]);
 
   return (
     <div className="intro-container">

@@ -36,7 +36,7 @@
   align-items: center;
 }
 
-.intro-text, .intro-final {
+.intro-start-screen, .intro-text, .intro-final {
   max-width: 680px;
   text-align: center;
   transition: opacity 1.5s ease-in-out;
@@ -58,7 +58,7 @@
   backdrop-filter: none;
 }
 
-.intro-final h1 {
+.intro-start-screen h1, .intro-final h1 {
   font-size: 3.5rem;
   color: #ff3333;
   margin-bottom: 40px;
