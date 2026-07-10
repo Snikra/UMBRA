@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import './IntroScreen.css';
 import themeAudio from '../assets/theme.mp3';
+import narratorAudio from '../assets/narrator.mp3';
 import { MUSIC_DROP_TIME } from '../config.js';
 
 const storyLines = [
@@ -21,16 +22,43 @@ export default function IntroScreen({ onFinishIntro }) {
   const [showButton, setShowButton] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const audioRef = useRef(null);
+  const narratorRef = useRef(null);
+
+  // Baixa ou aumenta suavemente o volume da música
+  const setMusicVolume = useCallback((vol) => {
+    if (audioRef.current) {
+      const target = vol;
+      const step = () => {
+        if (!audioRef.current) return;
+        const curr = audioRef.current.volume;
+        const diff = target - curr;
+        if (Math.abs(diff) < 0.01) {
+          audioRef.current.volume = target;
+          return;
+        }
+        audioRef.current.volume = curr + diff * 0.1;
+        requestAnimationFrame(step);
+      };
+      step();
+    }
+  }, []);
 
   const handleStart = () => {
     setHasStarted(true);
+    
+    // Toca a música tema com volume mais baixo (ducking)
     if (audioRef.current) {
-      audioRef.current.volume = 0.5;
+      audioRef.current.volume = 0.15;
       audioRef.current.play().catch(err => {
-        console.warn("Erro no play da tag principal, tentando fallback:", err);
-        const fallbackAudio = new Audio(themeAudio);
-        fallbackAudio.volume = 0.5;
-        fallbackAudio.play().catch(e => console.error("Fallback também falhou:", e));
+        console.warn("Erro no play da música:", err);
+      });
+    }
+
+    // Toca a voz da narração no volume máximo
+    if (narratorRef.current) {
+      narratorRef.current.volume = 1.0;
+      narratorRef.current.play().catch(err => {
+        console.warn("Erro no play da narração:", err);
       });
     }
   };
@@ -73,8 +101,18 @@ export default function IntroScreen({ onFinishIntro }) {
 
   return (
     <div className="intro-container">
-      {/* Áudio da Cinematic */}
+      {/* Áudio da Cena */}
       <audio ref={audioRef} src={themeAudio} preload="auto" />
+      {/* Áudio da Narração */}
+      <audio 
+        ref={narratorRef} 
+        src={narratorAudio} 
+        preload="auto" 
+        onEnded={() => {
+          // Quando a narração acabar, sobe o volume da música
+          setMusicVolume(0.5);
+        }}
+      />
       {/* Cena 3D de fundo */}
       <Suspense fallback={<div className="intro-bg-fallback" />}>
         <CinematicScene isFinal={showButton} hasStarted={hasStarted} audioRef={audioRef} />
