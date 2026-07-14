@@ -1,7 +1,6 @@
 package com.example.umbra
 
 import android.content.Context
-import android.util.Log
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.connection.*
 
@@ -17,22 +16,21 @@ class BattleManager(private val context: Context) {
     // Callbacks de Conexão
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
-            Log.d(TAG, "Conexão iniciada com: ${info.endpointName}")
-            // Aceita a conexão automaticamente para testes
+            UmbraLogger.d(TAG, "Conexão iniciada com: %s", info.endpointName)
             connectionsClient.acceptConnection(endpointId, payloadCallback)
         }
 
         override fun onConnectionResult(endpointId: String, result: ConnectionResolution) {
             if (result.status.isSuccess) {
-                Log.d(TAG, "Conectado com sucesso ao oponente: $endpointId")
+                UmbraLogger.d(TAG, "Conectado com sucesso ao oponente: %s", endpointId)
                 onConnected?.invoke(endpointId)
             } else {
-                Log.e(TAG, "Falha na conexão")
+                UmbraLogger.e(TAG, "Falha na conexão com: %s", endpointId)
             }
         }
 
         override fun onDisconnected(endpointId: String) {
-            Log.d(TAG, "Desconectado do oponente: $endpointId")
+            UmbraLogger.d(TAG, "Desconectado do oponente: %s", endpointId)
         }
     }
 
@@ -41,61 +39,73 @@ class BattleManager(private val context: Context) {
         override fun onPayloadReceived(endpointId: String, payload: Payload) {
             if (payload.type == Payload.Type.BYTES) {
                 val data = String(payload.asBytes() ?: ByteArray(0))
-                Log.d(TAG, "Golpe recebido: $data")
+                UmbraLogger.d(TAG, "Golpe recebido de %s: %s", endpointId, data)
                 onPayloadReceived?.invoke(endpointId, data)
             }
         }
-        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {}
+        override fun onPayloadTransferUpdate(endpointId: String, update: PayloadTransferUpdate) {
+            UmbraLogger.v(TAG, "Payload update from %s: %d/%d", endpointId, update.bytesTransferred, update.totalBytes)
+        }
     }
 
     fun startAdvertising(playerName: String) {
+        UmbraLogger.i(TAG, "Iniciando Advertising como: %s", playerName)
         val options = AdvertisingOptions.Builder().setStrategy(Strategy.P2P_POINT_TO_POINT).build()
         connectionsClient.startAdvertising(
             playerName, SERVICE_ID, connectionLifecycleCallback, options
         ).addOnSuccessListener {
-            Log.d(TAG, "Aguardando desafiantes (Advertising...)")
+            UmbraLogger.d(TAG, "Aguardando desafiantes (Advertising...)")
         }.addOnFailureListener { e ->
-            Log.e(TAG, "Erro ao abrir Fenda (Advertise)", e)
+            UmbraLogger.e(TAG, "Erro ao abrir Fenda (Advertise)", e)
         }
     }
 
     fun startDiscovery() {
+        UmbraLogger.i(TAG, "Iniciando descoberta de oponentes...")
         val options = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_POINT_TO_POINT).build()
         connectionsClient.startDiscovery(
             SERVICE_ID,
             object : EndpointDiscoveryCallback() {
                 override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-                    Log.d(TAG, "Desafiante encontrado: ${info.endpointName}")
+                    UmbraLogger.i(TAG, "Desafiante encontrado: %s (id=%s)", info.endpointName, endpointId)
                     onOpponentFound?.invoke(endpointId, info.endpointName)
                 }
                 override fun onEndpointLost(endpointId: String) {
-                    Log.d(TAG, "Desafiante sumiu: $endpointId")
+                    UmbraLogger.w(TAG, "Desafiante perdido: %s", endpointId)
                 }
             },
             options
         ).addOnSuccessListener {
-            Log.d(TAG, "Procurando Fendas (Discovering...)")
+            UmbraLogger.d(TAG, "Procurando Fendas (Discovering...)")
         }.addOnFailureListener { e ->
-            Log.e(TAG, "Erro ao buscar Fenda", e)
+            UmbraLogger.e(TAG, "Erro ao buscar Fenda", e)
         }
     }
 
     fun requestConnection(playerName: String, endpointId: String) {
+        UmbraLogger.i(TAG, "Solicitando conexão com: %s (como %s)", endpointId, playerName)
         connectionsClient.requestConnection(playerName, endpointId, connectionLifecycleCallback)
     }
 
     fun sendAttack(endpointId: String, attackName: String) {
+        UmbraLogger.d(TAG, "Enviando ataque '%s' para: %s", attackName, endpointId)
         val payload = Payload.fromBytes(attackName.toByteArray())
         connectionsClient.sendPayload(endpointId, payload)
     }
 
     fun stopAdvertising() {
         connectionsClient.stopAdvertising()
-        Log.d(TAG, "Parou de Hospedar (Advertising stopped)")
+        UmbraLogger.d(TAG, "Parou de Hospedar (Advertising stopped)")
     }
 
     fun stopDiscovery() {
         connectionsClient.stopDiscovery()
-        Log.d(TAG, "Parou de Procurar (Discovery stopped)")
+        UmbraLogger.d(TAG, "Parou de Procurar (Discovery stopped)")
+    }
+
+    fun stopAll() {
+        UmbraLogger.i(TAG, "Parando todas as operações de Nearby Connections")
+        stopAdvertising()
+        stopDiscovery()
     }
 }

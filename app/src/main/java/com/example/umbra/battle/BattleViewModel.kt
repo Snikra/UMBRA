@@ -12,6 +12,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.lifecycle.AndroidViewModel
 import com.example.umbra.BattleManager
+import com.example.umbra.UmbraLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,6 +22,7 @@ data class DiscoveredOpponent(val endpointId: String, val name: String)
 
 class BattleViewModel(application: Application) : AndroidViewModel(application), SensorEventListener {
 
+    private val TAG = "BattleViewModel"
     private val battleManager = BattleManager(application)
     
     // Hardware
@@ -53,21 +55,24 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
     private val _isHit = MutableStateFlow(false)
     val isHit: StateFlow<Boolean> = _isHit.asStateFlow()
 
-    // Configurações de Golpe (Threshold)
     private val SHAKE_THRESHOLD = 25f
     private var lastShakeTime: Long = 0
 
     init {
+        UmbraLogger.i(TAG, "BattleViewModel initialized")
+
         battleManager.onOpponentFound = { id, name ->
+            UmbraLogger.d(TAG, "Oponente encontrado: %s (%s)", name, id)
             val list = _discoveredOpponents.value.toMutableList()
             if (list.none { it.endpointId == id }) {
                 list.add(DiscoveredOpponent(id, name))
                 _discoveredOpponents.value = list
-                _isSearching.value = false // Para o radar quando acha alguém
+                _isSearching.value = false
             }
         }
 
         battleManager.onConnected = { id ->
+            UmbraLogger.i(TAG, "Conectado ao oponente: %s", id)
             _connectedOpponentId.value = id
             _playerHp.value = 100
             _enemyHp.value = 100
@@ -75,6 +80,7 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
         }
 
         battleManager.onPayloadReceived = { _, payload ->
+            UmbraLogger.d(TAG, "Payload recebido: %s", payload)
             if (payload == "ATTACK") {
                 takeDamage()
             }
@@ -82,30 +88,34 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
     }
 
     fun hostFenda(playerName: String) {
+        UmbraLogger.i(TAG, "Hosteando Fenda como: %s", playerName)
         battleManager.startAdvertising(playerName)
     }
 
     fun searchOponente() {
+        UmbraLogger.i(TAG, "Iniciando busca por oponentes...")
         _isSearching.value = true
         battleManager.startDiscovery()
     }
 
     fun connectToOpponent(playerName: String, endpointId: String) {
+        UmbraLogger.i(TAG, "Conectando a %s como %s", endpointId, playerName)
         battleManager.requestConnection(playerName, endpointId)
     }
 
     fun stopFenda() {
+        UmbraLogger.i(TAG, "Parando Fenda")
         battleManager.stopAdvertising()
         battleManager.stopDiscovery()
         _isSearching.value = false
-        _discoveredOpponents.value = emptyList() // Limpa a lista ao cancelar
+        _discoveredOpponents.value = emptyList()
     }
 
-    // --- SISTEMA FÍSICO (ACELERÔMETRO) ---
     private fun startSensors() {
+        UmbraLogger.d(TAG, "Registrando listener do acelerômetro")
         accelerometer?.let {
             sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-        }
+        } ?: UmbraLogger.w(TAG, "Acelerômetro não disponível neste dispositivo")
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -116,34 +126,37 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
 
             val acceleration = sqrt((x * x + y * y + z * z).toDouble()).toFloat()
             
-            // Se o solavanco for maior que o limiar e passou 1 seg do último golpe
             if (acceleration > SHAKE_THRESHOLD) {
                 val now = System.currentTimeMillis()
-                if (now - lastShakeTime > 1000) { // Cooldown de 1 segundo
+                if (now - lastShakeTime > 1000) {
                     lastShakeTime = now
+                    UmbraLogger.d(TAG, "Shake detectado! Aceleração: %.2f", acceleration)
                     performAttack()
                 }
             }
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        UmbraLogger.v(TAG, "Precisão do sensor alterada: %d", accuracy)
+    }
 
     private fun performAttack() {
-        val opponentId = _connectedOpponentId.value ?: return
+        val opponentId = _connectedOpponentId.value ?: run {
+            UmbraLogger.w(TAG, "Tentativa de ataque sem oponente conectado")
+            return
+        }
         
-        // Desconta a vida do inimigo localmente pra dar sensação instantânea
         _enemyHp.value = (_enemyHp.value - 10).coerceAtLeast(0)
-        
-        // Envia o payload via rádio pro oponente
+        UmbraLogger.d(TAG, "Ataque realizado! HP inimigo: %d", _enemyHp.value)
         battleManager.sendAttack(opponentId, "ATTACK")
     }
 
     private fun takeDamage() {
         _playerHp.value = (_playerHp.value - 10).coerceAtLeast(0)
-        _isHit.value = true // Pra piscar a tela
+        _isHit.value = true
+        UmbraLogger.d(TAG, "Dano recebido! HP: %d", _playerHp.value)
         
-        // Dá o tranco na mão (Vibração)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE))
         } else {
@@ -151,14 +164,15 @@ class BattleViewModel(application: Application) : AndroidViewModel(application),
             vibrator.vibrate(300)
         }
         
-        // Reseta o flash vermelho da tela depois de 300ms
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             _isHit.value = false
         }, 300)
     }
 
     override fun onCleared() {
+        UmbraLogger.i(TAG, "BattleViewModel cleared - desregistrando sensores")
         super.onCleared()
         sensorManager.unregisterListener(this)
+        battleManager.stopAll()
     }
 }

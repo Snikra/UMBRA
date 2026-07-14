@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -6,8 +8,9 @@ plugins {
 
 val localProperties = rootProject.file("local.properties")
 val mapboxAccessToken: String = if (localProperties.exists()) {
-    java.util.Properties().apply { load(localProperties.inputStream()) }
-        .getProperty("MAPBOX_ACCESS_TOKEN", "")
+    localProperties.inputStream().use { stream ->
+        Properties().apply { load(stream) }.getProperty("MAPBOX_ACCESS_TOKEN", "")
+    }
 } else ""
 
 android {

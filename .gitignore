@@ -16,3 +16,9 @@ local.properties
 gradle/gradle-daemon-jvm.properties
 /dist
 /node_modules
+cookies.txt
+build-apk.bat
+
+# Build logs
+/logs/
+*.log

@@ -71,13 +71,13 @@ set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
 :end
 @rem End local scope for the variables with windows NT shell
 set _GRADLE_EXIT_CODE=%ERRORLEVEL%
-pause
+if not "%GRADLE_NO_PAUSE%"=="1" pause
 if "%_GRADLE_EXIT_CODE%"=="0" goto mainEnd
 
 :fail
-rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
+rem Set variable GRADLE_NO_PAUSE=1 if you want to suppress pauses during automation
 rem the _cmd.exe /c_ return code!
-pause
+if not "%GRADLE_NO_PAUSE%"=="1" pause
 if  not "" == "%GRADLE_EXIT_CONSOLE%" exit 1
 exit /b 1
 
