@@ -12,6 +12,8 @@ dist
 certs/
 dist-ssr
 *.local
+.env
+.env.*
 
 # Editor directories and files
 .vscode/*
@@ -23,3 +25,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android / Gradle
+.gradle/
+gradle/
+build/
+local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Paperclip CLI
+paperclip/
